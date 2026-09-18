@@ -1,1 +1,136 @@
-<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.webmanifest"><title>SaxCoach v6</title><style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f5f7;color:#182235}header{background:#111827;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}h1{margin:0;font-size:22px}.sub{font-size:12px;opacity:.7}.screen{display:none;max-width:1100px;margin:auto;padding:18px 18px 90px}.active{display:block}nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom)}nav button{flex:1;border:0;background:#fff;padding:11px 4px;font-size:12px}.on{font-weight:800}.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #0000000b}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,input,select{font:inherit}button{border:0;border-radius:11px;padding:10px 13px;background:#e8edf2}button.primary{background:#111827;color:#fff}input,select{border:1px solid #ccd4de;border-radius:10px;padding:10px}.grow{flex:1}.muted{color:#687386}.pill{display:inline-block;background:#edf1f5;border-radius:20px;padding:5px 9px;font-size:12px;margin:2px}.song{display:flex;justify-content:space-between;gap:10px;align-items:center}.empty{text-align:center;padding:25px;color:#718096}.scorebox{background:#dfe4e9;border-radius:15px;padding:10px;overflow:hidden}.score{height:520px;background:#fff;border-radius:10px;position:relative;overflow:hidden}.staff{position:absolute;left:6%;right:6%;top:47%;height:90px;border-top:2px solid #222;border-bottom:2px solid #222}.staff:before,.staff:after{content:"";position:absolute;left:0;right:0;height:2px;background:#222}.staff:before{top:29px}.staff:after{top:58px}.staff5{position:absolute;left:6%;right:6%;top:77%;height:2px;background:#222}.note{position:absolute;font-size:34px;font-weight:700}.a{left:20%;top:43%}.b{left:34%;top:36%}.c{left:48%;top:49%}.d{left:62%;top:40%}.e{left:76%;top:54%}.red{position:absolute;left:6%;right:6%;top:77%;height:4px;background:#ef4444}.blue{position:absolute;left:6%;right:6%;top:47%;height:4px;background:#3b82f6;opacity:.9}.head{position:absolute;top:0;bottom:0;width:5px;background:#f59e0b;left:20%;box-shadow:0 0 10px #f59e0b88}.doremi{position:absolute;top:65%;left:0;right:0;text-align:center;font-size:21px;letter-spacing:12px;color:#334155}.measure{text-align:center;position:absolute;top:9%;left:0;right:0;font-weight:800;font-size:20px}.anno{position:absolute;top:18%;left:12%;background:#fff4a3;border:1px solid #dfc94d;padding:8px;border-radius:8px}.big{font-size:28px;font-weight:800}</style></head><body><header><div><h1>🎷 SaxCoach <span class="sub">v6</span></h1><span class="sub">Øv • Følg mig • Koncert</span></div><strong id="tempoTop">♩ 80</strong></header><section id="library" class="screen active"><div class="card"><h2>📚 Mit bibliotek</h2><div class="row"><input id="title" class="grow" placeholder="Navn på nummer"><select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baritone (Eb)</option></select><button class="primary" onclick="addSong()">＋ Tilføj nummer</button></div><p class="muted">Hvert nummer kan have original, ren nodeversion, Do-Re-Mi, noter, markeringer og tempo.</p></div><div class="card"><h3>📥 Indlæs nodeark</h3><div class="row"><button class="primary" onclick="document.getElementById('pdfFile').click()">📄 Vælg PDF</button><input id="pdfFile" type="file" accept="application/pdf" hidden onchange="importScore(this)"><button onclick="document.getElementById('photoFile').click()">📷 Vælg foto / scan</button><input id="photoFile" type="file" accept="image/*" capture="environment" hidden onchange="importScore(this)"></div><div id="importPreview" class="muted" style="margin-top:10px"></div></div><div class="card"><h3>🎵 Numre</h3><div id="songs"></div></div></section><section id="editor" class="screen"><div class="row"><button onclick="show('library')">← Bibliotek</button><h2 id="songName">Nodeark</h2></div><div class="card"><div class="row"><button onclick="layer('doremi')">Do–Re–Mi</button><button onclick="layer('help')">🔴🔵 Hjælpelinjer</button><button onclick="addAnnotation()">✏️ Skriv note</button></div><div class="scorebox"><div class="score"><div class="measure" id="measure">Takt 1–8</div><div class="staff"></div><div class="staff5"></div><div class="red help"></div><div class="blue help"></div><div class="note a">♩</div><div class="note b">♪</div><div class="note c">♩</div><div class="note d">♪</div><div class="note e">♩</div><div class="doremi doremiLayer">Do Re Mi Fa Sol</div><div class="anno" id="anno" style="display:none"></div><div class="head" id="head"></div></div></div><p class="muted">Prototype-nodeark. Original PDF/scan skal i den fulde OMR-version ligge separat fra den rene nodeversion.</p></div><div class="card"><h3>⏱️ Tempo</h3><div class="row"><input id="bpm" type="number" min="30" max="240" value="80"><button onclick="newBpm()">Ny BPM</button><button onclick="eventTempo('rit.')">Ritardando</button><button onclick="eventTempo('accel.')">Accelerando</button><button onclick="eventTempo('a tempo')">A tempo</button></div><div id="events"></div></div><div class="card"><h3>🎯 Følg mig</h3><button class="primary" onclick="follow()">▶ Start Følg mig</button><button onclick="stop()">■ Stop</button><span class="pill" id="state">Klar</span></div></section><section id="practice" class="screen"><div class="card"><h2>🎯 Følg mig</h2><div class="big" id="pTempo">♩ 80 BPM</div><div class="scorebox"><div class="score"><div class="measure" id="pMeasure">Takt 1–8</div><div class="staff"></div><div class="staff5"></div><div class="red"></div><div class="blue"></div><div class="note a">♩</div><div class="note b">♪</div><div class="note c">♩</div><div class="note d">♪</div><div class="note e">♩</div><div class="doremi">Do Re Mi Fa Sol</div><div class="head" id="pHead"></div></div></div><div class="row"><button class="primary" onclick="practiceFollow()">▶ Start</button><button onclick="stop()">■ Stop</button></div><p class="muted">Aktuel musik holdes omkring midten. Demoen simulerer glidende fremføring og takt-skift.</p></div></section><section id="concert" class="screen"><div class="card"><h2>🎤 Koncerter / setlister</h2><div class="row"><input id="concert" class="grow" placeholder="Fx Sommerkoncert"><button class="primary" onclick="addConcert()">＋ Opret</button></div></div><div class="card"><h3>Mine koncerter</h3><div id="concerts"></div></div></section><nav><button id="n-library" class="on" onclick="show('library')">📚<br>Bibliotek</button><button id="n-editor" onclick="show('editor')">🎼<br>Nodeark</button><button id="n-practice" onclick="show('practice')">🎯<br>Øv</button><button id="n-concert" onclick="show('concert')">🎤<br>Koncert</button></nav><script>let db=JSON.parse(localStorage.getItem('saxcoach6')||'{"songs":[],"concerts":[],"current":null}'),timer=null,pos=20,bpm=80,help=true,doremi=true;function save(){localStorage.setItem('saxcoach6',JSON.stringify(db));render()}function render(){let s=document.getElementById('songs');s.innerHTML=db.songs.length?db.songs.map(x=>`<div class="card song"><div><b>${x.title}</b><br><span class="pill">${x.sax}</span><span class="pill">♩ ${x.bpm}</span></div><div><button onclick="openSong('${x.id}')">Åbn</button><button onclick="addToFirst('${x.id}')">＋ Koncert</button></div></div>`).join(''):'<div class="empty">Tilføj dit første nummer.</div>';let c=document.getElementById('concerts');c.innerHTML=db.concerts.length?db.concerts.map(x=>`<div class="card"><b>🎤 ${x.name}</b><p>${x.songs.map(id=>(db.songs.find(s=>s.id===id)||{}).title||'').filter(Boolean).join(' → ')||'Ingen numre'}</p><button class="primary" onclick="startConcert('${x.id}')">Start koncert</button></div>`).join(''):'<div class="empty">Opret en koncert og tilføj numre fra biblioteket.</div>'}function show(id){document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(e=>e.classList.remove('on'));document.getElementById('n-'+id).classList.add('on')}function importScore(input){const f=input.files&&input.files[0];if(!f)return;document.getElementById("title").value=f.name.replace(/\.[^.]+$/,"");const box=document.getElementById("importPreview");box.innerHTML="<b>Klar til import:</b> "+f.name+" ("+Math.round(f.size/1024)+" KB)<br>Tryk “＋ Tilføj nummer” for at gemme den.";window._pendingScore={name:f.name,type:f.type,size:f.size,kind:f.type==="application/pdf"?"PDF":"Foto/scan"};if(f.type.startsWith("image/")){const u=URL.createObjectURL(f);box.innerHTML+="<br><img src=\""+u+"\" style=\"max-width:100%;max-height:260px;margin-top:8px;border-radius:10px\" alt=\"Nodeark\">"}}function addSong(){let t=document.getElementById('title').value.trim()||'Mit saxofonnummer',x={id:Date.now().toString(),title:t,sax:document.getElementById('sax').value,bpm:80,pages:5,annotations:[],tempoEvents:[],source:null};x.source=window._pendingScore||null;db.songs.push(x);db.current=x.id;window._pendingScore=null;document.getElementById('title').value='';document.getElementById('importPreview').textContent='';save();openSong(x.id)}function openSong(id){db.current=id;let x=db.songs.find(s=>s.id===id);document.getElementById('songName').textContent=x.title;bpm=x.bpm;document.getElementById('bpm').value=bpm;document.getElementById('tempoTop').textContent='♩ '+bpm;document.getElementById('pTempo').textContent='♩ '+bpm+' BPM';renderEvents();show('editor')}function renderEvents(){let x=db.songs.find(s=>s.id===db.current);document.getElementById('events').innerHTML=(x?.tempoEvents||[]).map(e=>`<span class="pill">Takt ${e.bar}: ${e.type} ${e.bpm}</span>`).join(' ')}function newBpm(){bpm=+document.getElementById('bpm').value||80;let x=db.songs.find(s=>s.id===db.current);if(x){x.bpm=bpm;x.tempoEvents.push({bar:Math.floor(pos/10)+1,type:'BPM',bpm})}document.getElementById('tempoTop').textContent='♩ '+bpm;document.getElementById('pTempo').textContent='♩ '+bpm+' BPM';save();renderEvents()}function eventTempo(type){let x=db.songs.find(s=>s.id===db.current);if(x){x.tempoEvents.push({bar:Math.floor(pos/10)+1,type,bpm});save();renderEvents()}}function addAnnotation(){let x=db.songs.find(s=>s.id===db.current),t=prompt('Skriv din note','Husk at trække vejret');if(t&&x){x.annotations.push({text:t,bar:Math.floor(pos/10)+1});let a=document.getElementById('anno');a.textContent='📝 '+t;a.style.display='block';save()}}function layer(k){if(k==='help'){help=!help;document.querySelectorAll('.help').forEach(e=>e.style.display=help?'':'none')}else{doremi=!doremi;document.querySelectorAll('.doremiLayer').forEach(e=>e.style.display=doremi?'':'none')}}function move(ids){pos+=1.5;if(pos>92)pos=8;ids.forEach(id=>document.getElementById(id).style.left=pos+'%');let m='Takt '+(Math.floor(pos/10)+1)+'–'+(Math.floor(pos/10)+8);document.getElementById('measure').textContent=m;document.getElementById('pMeasure').textContent=m}function follow(){if(timer)return;document.getElementById('state').textContent='Følger…';timer=setInterval(()=>move(['head']),90)}function practiceFollow(){if(timer)return;timer=setInterval(()=>move(['pHead']),100)}function stop(){clearInterval(timer);timer=null;document.getElementById('state').textContent='Klar'}function addConcert(){let n=document.getElementById('concert').value.trim()||'Ny koncert';db.concerts.push({id:Date.now().toString(),name:n,songs:[]});document.getElementById('concert').value='';save()}function addToFirst(id){if(!db.concerts.length){show('concert');alert('Opret først en koncert.');return}if(!db.concerts[0].songs.includes(id))db.concerts[0].songs.push(id);save()}function startConcert(id){let c=db.concerts.find(x=>x.id===id);if(c&&c.songs[0])openSong(c.songs[0]);else show('concert')}render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');</script></body></html>
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.webmanifest">
+<title>SaxCoach v6 – PDF & Foto</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f5f7;color:#172033}
+header{background:#111827;color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+main{max-width:1100px;margin:auto;padding:16px 16px 90px}.card{background:white;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #0001}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grow{flex:1}
+button,input,select{font:inherit}button{border:0;border-radius:11px;padding:10px 13px;background:#e8edf2;margin:3px}.primary{background:#111827;color:white}
+input,select{border:1px solid #ccd4de;border-radius:10px;padding:10px}.muted{color:#687386;font-size:14px}
+#viewer{background:#555;border-radius:14px;padding:10px;text-align:center;min-height:320px}
+#photoView{max-width:100%;max-height:72vh;background:white;border-radius:8px;display:none}
+#pdfFrame{width:100%;height:72vh;border:0;background:white;border-radius:8px;display:none}
+.badge{background:#edf1f5;border-radius:20px;padding:5px 9px;font-size:12px;display:inline-block;margin:2px}
+.pagebar{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:10px}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:white;border-radius:0;margin:0;font-size:12px}
+</style>
+</head>
+<body>
+<header><div><b>🎷 SaxCoach v6</b><div style="font-size:12px;opacity:.7">PDF • Foto • Nodeark</div></div><b id="status">Klar</b></header>
+<main>
+<div class="card">
+<h2>📄 Indlæs nodeark</h2>
+<div class="row">
+<input id="title" class="grow" placeholder="Navn på nummer">
+<select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baritone (Eb)</option></select>
+</div>
+<div class="row">
+<label><button class="primary">📄 Vælg PDF<input id="pdf" type="file" accept="application/pdf" hidden></button></label>
+<label><button>📷 Vælg foto<input id="photo" type="file" accept="image/*" capture="environment" hidden></button></label>
+<button onclick="saveSong()">💾 Gem nummer</button>
+</div>
+<p class="muted">Vælg et nodeark fra Filer eller tag/vælg et billede. Originalen vises uden at blive ændret.</p>
+</div>
+
+<div class="card">
+<h3>🎼 Nodeark</h3>
+<div id="viewer">
+<div id="empty" style="color:white;padding:100px 10px">Vælg en PDF eller et foto ovenfor.</div>
+<img id="photoView">
+<iframe id="pdfFrame"></iframe>
+</div>
+<div class="pagebar">
+<button onclick="prevPage()">‹ Forrige</button>
+<span class="badge" id="page">Side 1</span>
+<button onclick="nextPage()">Næste ›</button>
+</div>
+</div>
+
+<div class="card">
+<h3>📚 Gemte numre</h3>
+<div id="songs"></div>
+</div>
+
+<div class="card">
+<h3>Næste trin</h3>
+<p class="muted">Denne version indlæser og viser den originale PDF eller det originale foto. Den ægte automatiske nodegenkendelse (OMR), ren nodeversion og Do-Re-Mi-lag kommer ovenpå denne visning.</p>
+</div>
+</main>
+
+<nav>
+<button>📚<br>Bibliotek</button>
+<button onclick="alert('Øvefunktionerne fra v6 ligger i hovedprototypen.')">🎯<br>Øv</button>
+<button onclick="alert('Koncertfunktionerne fra v6 ligger i hovedprototypen.')">🎤<br>Koncert</button>
+</nav>
+
+<script>
+let db=JSON.parse(localStorage.getItem("saxcoach-v6-files")||'{"songs":[]}');
+let currentFile=null, currentUrl=null, pageNo=1;
+
+const $=id=>document.getElementById(id);
+
+$("pdf").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f)return;
+  currentFile=f;
+  $("title").value=$("title").value||f.name.replace(/\.pdf$/i,"");
+  if(currentUrl)URL.revokeObjectURL(currentUrl);
+  currentUrl=URL.createObjectURL(f);
+  $("pdfFrame").src=currentUrl;
+  $("pdfFrame").style.display="block";
+  $("photoView").style.display="none";
+  $("empty").style.display="none";
+  $("status").textContent="PDF indlæst";
+  pageNo=1; updatePage();
+});
+
+$("photo").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f)return;
+  currentFile=f;
+  $("title").value=$("title").value||f.name.replace(/\.[^.]+$/,"");
+  if(currentUrl)URL.revokeObjectURL(currentUrl);
+  currentUrl=URL.createObjectURL(f);
+  $("photoView").src=currentUrl;
+  $("photoView").style.display="block";
+  $("pdfFrame").style.display="none";
+  $("empty").style.display="none";
+  $("status").textContent="Foto indlæst";
+  pageNo=1; updatePage();
+});
+
+function updatePage(){ $("page").textContent="Side "+pageNo; }
+function prevPage(){if(pageNo>1){pageNo--;updatePage();}}
+function nextPage(){pageNo++;updatePage();}
+
+function saveSong(){
+  if(!currentFile){alert("Vælg først en PDF eller et foto.");return;}
+  db.songs.push({
+    id:Date.now(),
+    title:$("title").value||currentFile.name,
+    sax:$("sax").value,
+    fileName:currentFile.name,
+    type:currentFile.type,
+    importedAt:new Date().toISOString()
+  });
+  localStorage.setItem("saxcoach-v6-files",JSON.stringify(db));
+  render();
+  $("status").textContent="Gemt i bibliotek";
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function render(){
+  $("songs").innerHTML=db.songs.length
+    ?db.songs.map(s=>`<div class="card"><b>${esc(s.title)}</b><br><span class="badge">${esc(s.sax)}</span><span class="badge">${esc(s.type==="application/pdf"?"PDF":"Foto")}</span><br><span class="muted">${esc(s.fileName)}</span></div>`).join("")
+    :'<p class="muted">Ingen gemte numre endnu.</p>';
+}
+render();
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
