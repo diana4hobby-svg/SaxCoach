@@ -1,9 +1,1 @@
-{
-  "name": "SaxCoach v6 – PDF & Foto",
-  "short_name": "SaxCoach",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#f3f5f7",
-  "theme_color": "#111827",
-  "lang": "da"
-}
+{"name":"SaxCoach v9","short_name":"SaxCoach","start_url":"./","display":"standalone","background_color":"#111111","theme_color":"#111111","icons":[]}
