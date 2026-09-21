@@ -1,134 +1,79 @@
 <!doctype html>
-<html lang="da">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SaxCoach v9 – Nodeværdi</title>
+<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172554"><title>SaxCoach v10</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111;color:#eee}
-header{padding:14px 16px;background:#1d1d1f;position:sticky;top:0;z-index:5;border-bottom:1px solid #333}
-h1{font-size:20px;margin:0 0 4px}.sub{font-size:13px;color:#aaa}
-main{padding:14px;max-width:1100px;margin:auto}.card{background:#1c1c1e;border:1px solid #333;border-radius:14px;padding:14px;margin-bottom:14px}
-button,label.file{background:#2c2c2e;color:#fff;border:1px solid #555;border-radius:10px;padding:10px 13px;display:inline-block;margin:4px 4px 4px 0;font-size:15px}
-button:active{transform:scale(.98)}input[type=file]{display:none}
-canvas{width:100%;background:#000;border-radius:10px;display:block;max-height:58vh;object-fit:contain}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:700px){.grid{grid-template-columns:1fr}}
-.stat{padding:10px;background:#252527;border-radius:10px}.muted{color:#aaa;font-size:13px}
-table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px;border-bottom:1px solid #3a3a3c;text-align:left}select{background:#2c2c2e;color:#fff;border:1px solid #555;border-radius:7px;padding:6px}
-.badge{padding:3px 7px;border-radius:7px;background:#39393c;font-size:12px}.ok{background:#234f2c}.warn{background:#594c22}
-#drop{border:2px dashed #555;text-align:center;padding:18px;border-radius:12px}
-</style>
-<link rel="manifest" href="manifest.webmanifest"></head>
-<body>
-<header><h1>🎷 SaxCoach v9</h1><div class="sub">Nodehoved + hals + bjælke → forslag til nodeværdi</div></header>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef2ff;color:#172033}
+header{background:#172554;color:#fff;padding:18px 16px}h1{margin:0}.sub{opacity:.8;font-size:13px}
+nav{display:flex;gap:6px;overflow:auto;background:#fff;padding:9px;position:sticky;top:0;z-index:2}
+nav button,button{border:0;border-radius:10px;padding:10px 12px;background:#e2e8f0}nav .active{background:#dbeafe;color:#1e40af;font-weight:bold}
+main{max-width:1000px;margin:auto;padding:12px}.panel{display:none}.panel.active{display:block}
+.card{background:#fff;border:1px solid #dbe3f0;border-radius:15px;padding:14px;margin-bottom:12px}
+.primary{background:#1d4ed8;color:#fff}input,select,textarea{font:inherit;padding:9px;border:1px solid #dbe3f0;border-radius:9px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.small{font-size:13px;color:#64748b}
+#pdfFrame{width:100%;height:600px;border:0}.list{border-top:1px solid #dbe3f0;padding:10px 0}
+table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #dbe3f0;text-align:left;font-size:13px}
+.score{background:#fff;min-width:700px;padding:20px}.staff{height:105px;position:relative;margin:30px 0}
+.line{position:absolute;left:20px;right:20px;height:2px;background:#111}.l1{top:10px}.l2{top:30px}.l3{top:50px}.l4{top:70px}.l5{top:90px}
+.note{position:absolute;width:18px;height:12px;border-radius:50%;background:#111;transform:rotate(-15deg)}.open{background:#fff;border:2px solid #111}
+.stem{position:absolute;width:2px;height:34px;background:#111;left:15px;top:-30px}.label{position:absolute;top:17px;font-size:12px;color:#1d4ed8;font-weight:bold}
+.toast{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:#111827;color:white;padding:10px 14px;border-radius:10px;display:none}
+</style></head><body>
+<header><h1>🎷 SaxCoach v10</h1><div class="sub">Samlet grundtest – PDF, foto, OMR, nodeark, bibliotek og koncert</div></header>
+<nav>
+<button class="active" data-p="home">🏠 Start</button><button data-p="import">📄 Import</button><button data-p="omr">🧠 Genkend</button><button data-p="score">🎼 Nodeark</button><button data-p="library">📚 Bibliotek</button><button data-p="concert">🎭 Koncert</button><button data-p="settings">⚙️ Indstillinger</button>
+</nav>
 <main>
-<div class="card">
-  <div id="drop">Vælg et nodefoto eller en scanning</div>
-  <label class="file">📷 Vælg foto<input id="file" type="file" accept="image/*"></label>
-  <button id="demo">🎼 Brug demoark</button>
-  <button id="analyze">🔎 Analysér nodeværdier</button>
-  <button id="clear">Ryd</button>
-</div>
-<div class="card">
-  <div class="grid">
-    <div class="stat"><b>Nodehoveder</b><div id="heads">–</div></div>
-    <div class="stat"><b>Halse</b><div id="stems">–</div></div>
-    <div class="stat"><b>Bjælker</b><div id="beams">–</div></div>
-    <div class="stat"><b>Forslag</b><div id="values">–</div></div>
-  </div>
-</div>
-<div class="card"><canvas id="cv"></canvas></div>
-<div class="card">
-<h2 style="font-size:18px">Kontrol – forslag</h2>
-<div class="muted">Grøn = højere sikkerhed. Gul = bør kontrolleres. Du kan rette nodeværdien manuelt.</div>
-<div style="overflow:auto;margin-top:8px"><table><thead><tr><th>#</th><th>Do-Re-Mi</th><th>Position</th><th>Fundet symbol</th><th>Forslag</th><th>Sikkerhed</th></tr></thead><tbody id="rows"></tbody></table></div>
-</div>
-<div class="card muted">
-<b>Prototype:</b> v9 bruger billedanalyse i browseren. Den forsøger at skelne mellem åbne/lukkede nodehoveder, finde halse og bjælker og derfra foreslå hel, halv, fjerdedel, ottendedel eller sekstendedel. Det er ikke professionel OMR endnu, så forslagene skal kontrolleres.
-</div>
-</main>
+<section id="home" class="panel active"><div class="card"><h2>v10 – trin 1–12</h2>
+<p>Test grundfunktionerne én efter én. OMR er stadig en prototype og skal kontrolleres manuelt.</p>
+<div id="status"></div></div></section>
+
+<section id="import" class="panel">
+<div class="card"><h2>📄 Importér PDF</h2><input id="pdf" type="file" accept="application/pdf"><div id="pdfInfo" class="small"></div><iframe id="pdfFrame"></iframe></div>
+<div class="card"><h2>📷 Foto / scan</h2><input id="photo" type="file" accept="image/*" capture="environment"><div id="photoInfo" class="small"></div><img id="preview" style="max-width:100%;display:none;margin-top:10px"></div>
+<div class="card"><h2>💾 Gem sang</h2><input id="songName" placeholder="Sangens navn"><button class="primary" onclick="saveSong()">Gem i bibliotek</button></div>
+</section>
+
+<section id="omr" class="panel"><div class="card"><h2>🧠 Genkend noder</h2>
+<p class="small">Browserbaseret heuristisk prototype. Bruges til test af arbejdsgangen, ikke som professionel OMR.</p>
+<button class="primary" onclick="demoOMR()">Genkend / brug demo</button><span id="omrMsg" class="small"></span></div>
+<div class="card"><h2>Kontrol af noder</h2><table><thead><tr><th>Takt</th><th>Do-Re-Mi</th><th>Værdi</th><th>Fortegn</th><th></th></tr></thead><tbody id="omrTable"></tbody></table></div></section>
+
+<section id="score" class="panel"><div class="card"><h2>🎼 Nodeark</h2><div class="row">
+<label>Sax <select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baryton (Eb)</option></select></label>
+<label>Vis <select id="view"><option>Original + Do-Re-Mi</option><option>Original</option><option>Do-Re-Mi</option></select></label>
+<label>BPM <input id="bpm" type="number" value="80" min="30" max="240" style="width:70px"></label>
+<button onclick="play()">▶ Spil demo-takt</button><button onclick="stop()">■ Stop</button></div>
+<div style="overflow:auto;border:1px solid #dbe3f0;border-radius:12px"><div id="scoreView" class="score"></div></div></div>
+<div class="card"><h2>📝 Egne noter</h2><textarea id="note" rows="3" style="width:100%" placeholder="Fx Husk at trække vejret her"></textarea><button onclick="addNote()">Gem note</button><div id="notes"></div></div></section>
+
+<section id="library" class="panel"><div class="card"><h2>📚 Mit bibliotek</h2><div id="libraryList"></div></div></section>
+<section id="concert" class="panel"><div class="card"><h2>🎭 Koncert</h2><input id="concertName" placeholder="Fx Sommerkoncert"><button class="primary" onclick="newConcert()">Opret koncert</button><div id="concertList"></div></div></section>
+<section id="settings" class="panel"><div class="card"><h2>🎷 Saxofon</h2><p>Valget gemmes lokalt.</p><select id="sax2"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baryton (Eb)</option></select></div>
+<div class="card"><h2>📱 Offline</h2><p class="small">Appens grundfiler caches efter første indlæsning. PDF/foto-data har browserbegrænsninger i denne prototype.</p><b id="sw">Tester service worker…</b></div></section>
+</main><div id="toast" class="toast"></div>
+
 <script>
-const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),file=document.getElementById('file');
-let img=null, results=[];
-
-const names=["Do","Re","Mi","Fa","Sol","La","Si"];
-const vals=["Hel","Halv","Fjerdedel","Ottendedel","Sekstendedel"];
-
-function loadImage(src){
- const im=new Image(); im.onload=()=>{img=im; cv.width=im.naturalWidth;cv.height=im.naturalHeight;drawBase(); analyze();}; im.src=src;
-}
-function drawBase(){if(!img)return;ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0);}
-function demoImage(){
- const w=1200,h=760;cvs=document.createElement("canvas");cvs.width=w;cvs.height=h;let c=cvs.getContext("2d");
- c.fillStyle="#fff";c.fillRect(0,0,w,h);c.strokeStyle="#111";c.lineWidth=3;
- for(let y=180;y<=300;y+=30)c.beginPath(),c.moveTo(70,y),c.lineTo(1130,y),c.stroke();
- c.font="26px sans-serif";c.fillStyle="#111";c.fillText("4/4     ♩ = 90",80,120);
- const xs=[180,300,420,540,690,840,990];const ys=[300,270,240,210,225,255,285];
- xs.forEach((x,i)=>{let y=ys[i];c.beginPath();c.ellipse(x,y,15,11,0,0,Math.PI*2);c.fill();c.lineWidth=5;c.beginPath();c.moveTo(x+12,y);c.lineTo(x+12,y-80);c.stroke();if(i>=4&&i<=5){c.lineWidth=8;c.beginPath();c.moveTo(xs[i]+12,ys[i]-80);c.lineTo(xs[i+1]+12,ys[i+1]-80);c.stroke()}});
- loadImage(cvs.toDataURL());
-}
-function analyze(){
- if(!img)return;
- // Heuristic symbolic demo-analysis: scan dark compact regions around a staff estimate.
- // Produces deterministic candidates from image dimensions and visible staff geometry.
- const W=img.naturalWidth,H=img.naturalHeight;
- results=[];
- // Find staff lines from grayscale horizontal darkness.
- const oc=document.createElement("canvas"),o=oc.getContext("2d");oc.width=W;oc.height=H;o.drawImage(img,0,0);
- const d=o.getImageData(0,0,W,H).data, score=[];
- for(let y=0;y<H;y++){let s=0;for(let x=0;x<W;x+=3){let p=(y*W+x)*4;if((d[p]+d[p+1]+d[p+2])/3<100)s++;}score.push(s);}
- const candidates=score.map((s,y)=>({s,y})).sort((a,b)=>b.s-a.s).slice(0,20).sort((a,b)=>a.y-b.y);
- let lines=[];for(const q of candidates){if(!lines.some(y=>Math.abs(y-q.y)<8))lines.push(q.y)}lines=lines.slice(0,5).sort((a,b)=>a-b);
- if(lines.length<5)lines=[180,210,240,270,300].map(v=>Math.round(v*H/760));
- const top=lines[0],bot=lines[lines.length-1],space=(bot-top)/4;
- // Candidate x positions are found by vertical darkness concentration.
- let xs=[];
- for(let x=0;x<W;x+=3){let s=0;for(let y=Math.max(0,top-90);y<Math.min(H,bot+20);y+=2){let p=(y*W+x)*4;if((d[p]+d[p+1]+d[p+2])/3<90)s++;}if(s>12)xs.push({x,s});}
- let groups=[];for(const q of xs){let g=groups.at(-1);if(!g||q.x-g.x>18)groups.push({x:q.x,s:q.s,n:1});else{g.x=(g.x*g.n+q.x)/(g.n+1);g.s+=q.s;g.n++;}}
- groups=groups.filter(g=>g.s>25).slice(0,18);
- if(groups.length<4) groups=[.15,.25,.35,.45,.575,.70,.825].map((r)=>({x:r*W}));
- groups=groups.slice(0,14);
- groups.forEach((g,i)=>{
-   const y=top+space*((i*1.3)%4.6);
-   const pos=Math.round((y-top)/space);
-   const pitch=Math.max(0,Math.min(6,4-Math.round((y-top)/space)));
-   const closed=i%3!==1, stem=i%5!==3, beam=(i>0&&i%4===0);
-   let value=closed?(beam?"Ottendedel":"Fjerdedel"):(stem?"Halv":"Hel");
-   if(beam&&i%8===0)value="Sekstendedel";
-   results.push({x:g.x,y,pitch,name:names[pitch],closed,stem,beam,value,confidence:beam||closed?0.78:0.61});
- });
- updateStats();drawOverlay();renderRows();
-}
-function updateStats(){
- document.getElementById("heads").textContent=results.length;
- document.getElementById("stems").textContent=results.filter(r=>r.stem).length;
- document.getElementById("beams").textContent=results.filter(r=>r.beam).length;
- document.getElementById("values").textContent=results.map(r=>r.value).join(" · ");
-}
-function drawOverlay(){
- drawBase();if(!img)return;
- results.forEach((r,i)=>{
-  ctx.strokeStyle=r.confidence>=.75?"#36d46b":"#ffd447";ctx.lineWidth=4;
-  ctx.beginPath();ctx.arc(r.x,r.y,16,0,Math.PI*2);ctx.stroke();
-  if(r.stem){ctx.beginPath();ctx.moveTo(r.x+12,r.y);ctx.lineTo(r.x+12,r.y-55);ctx.stroke();}
-  if(r.beam){ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(r.x+12,r.y-55);ctx.lineTo(r.x+52,r.y-55);ctx.stroke();}
-  ctx.fillStyle="#fff";ctx.font="bold 18px sans-serif";ctx.fillText(r.name+" • "+r.value,r.x+20,r.y-10);
- });
-}
-function renderRows(){
- const tb=document.getElementById("rows");tb.innerHTML="";
- results.forEach((r,i)=>{
-  const tr=document.createElement("tr");
-  tr.innerHTML=`<td>${i+1}</td><td>${r.name}</td><td>${Math.round(r.y)}</td><td>${r.closed?"Lukket":"Åben"}${r.stem?" + hals":""}${r.beam?" + bjælke":""}</td>
-  <td><select data-i="${i}">${vals.map(v=>`<option ${v===r.value?"selected":""}>${v}</option>`).join("")}</select></td>
-  <td><span class="badge ${r.confidence>=.75?"ok":"warn"}">${Math.round(r.confidence*100)}%</span></td>`;
-  tb.appendChild(tr);
- });
- tb.querySelectorAll("select").forEach(s=>s.onchange=e=>{results[+e.target.dataset.i].value=e.target.value;updateStats();drawOverlay()});
-}
-file.onchange=e=>{const f=e.target.files[0];if(f){const rd=new FileReader();rd.onload=()=>loadImage(rd.result);rd.readAsDataURL(f)}};
-document.getElementById("demo").onclick=demoImage;
-document.getElementById("analyze").onclick=analyze;
-document.getElementById("clear").onclick=()=>{img=null;results=[];ctx.clearRect(0,0,cv.width,cv.height);document.getElementById("rows").innerHTML="";["heads","stems","beams","values"].forEach(id=>document.getElementById(id).textContent="–")};
-</script>
-</body></html>
+const q=s=>document.querySelector(s), qa=s=>document.querySelectorAll(s);
+qa('nav button').forEach(b=>b.onclick=()=>{qa('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');qa('.panel').forEach(x=>x.classList.remove('active'));q('#'+b.dataset.p).classList.add('active')});
+let data=JSON.parse(localStorage.getItem('saxcoach_v10')||'{"songs":[],"concerts":[],"notes":[],"omr":[]}');
+const save=()=>{localStorage.setItem('saxcoach_v10',JSON.stringify(data));render()};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){q('#toast').textContent=t;q('#toast').style.display='block';setTimeout(()=>q('#toast').style.display='none',1600)}
+q('#pdf').onchange=e=>{let f=e.target.files[0];if(!f)return;q('#pdfInfo').textContent='Valgt: '+f.name;q('#pdfFrame').src=URL.createObjectURL(f);data.pdf=f.name;save();toast('PDF valgt')};
+q('#photo').onchange=e=>{let f=e.target.files[0];if(!f)return;q('#photoInfo').textContent='Valgt: '+f.name;q('#preview').src=URL.createObjectURL(f);q('#preview').style.display='block';data.photo=f.name;save();toast('Foto valgt')};
+function saveSong(){let n=q('#songName').value.trim()||'Ny sang';data.songs.push({id:Date.now(),name:n,pdf:data.pdf||'',photo:data.photo||'',sax:q('#sax').value});save();q('#songName').value='';toast('Sang gemt')}
+function demoOMR(){data.omr=[{m:1,n:[['Do','quarter',''],['Re','quarter',''],['Mi','half','']]},{m:2,n:[['Fa','eighth',''],['Sol','eighth',''],['La','quarter','♯'],['Si','quarter','']]}];save();q('#omrMsg').textContent=' Demoanalyse klar – kontrollér forslagene.'}
+function renderOMR(){let b=q('#omrTable');b.innerHTML='';data.omr.forEach((m,mi)=>m.n.forEach((n,ni)=>{let tr=document.createElement('tr');tr.innerHTML='<td>'+m.m+'</td><td><select>'+['Do','Re','Mi','Fa','Sol','La','Si'].map(x=>'<option '+(x==n[0]?'selected':'')+'>'+x+'</option>').join('')+'</select></td><td><select>'+['whole','half','quarter','eighth','sixteenth'].map(x=>'<option '+(x==n[1]?'selected':'')+'>'+x+'</option>').join('')+'</select></td><td><select><option></option><option>♯</option><option>♭</option><option>♮</option></select></td><td><button>Slet</button></td>';let s=tr.querySelectorAll('select');s[0].onchange=()=>{n[0]=s[0].value;save()};s[1].onchange=()=>{n[1]=s[1].value;save()};s[2].value=n[2]||'';s[2].onchange=()=>{n[2]=s[2].value;save()};tr.querySelector('button').onclick=()=>{m.n.splice(ni,1);save()};b.appendChild(tr)}))}
+function renderScore(){let el=q('#scoreView');el.innerHTML='';let arr=data.omr.length?data.omr:[{m:1,n:[['Do','quarter',''],['Re','quarter',''],['Mi','quarter',''],['Fa','quarter',''],['Sol','half','']]},{m:2,n:[['La','quarter',''],['Sol','quarter',''],['Fa','quarter',''],['Mi','quarter',''],['Re','half','']]}];let y={Si:0,La:1,Sol:2,Fa:3,Mi:4,Re:5,Do:6};arr.forEach(m=>{let st=document.createElement('div');st.className='staff';st.innerHTML='<div class="line l1"></div><div class="line l2"></div><div class="line l3"></div><div class="line l4"></div><div class="line l5"></div><div class="small">Takt '+m.m+'</div>';let x=50;m.n.forEach(n=>{let z=document.createElement('div');z.className='note '+(['half','whole'].includes(n[1])?'open':'');z.style.left=x+'px';z.style.top=(10+(y[n[0]]||0)*13)+'px';if(q('#view').value!='Original'){let l=document.createElement('span');l.className='label';l.textContent=n[0];z.appendChild(l)}if(n[1]!='whole'){let stem=document.createElement('i');stem.className='stem';z.appendChild(stem)}st.appendChild(z);x+=100});el.appendChild(st)})}
+function addNote(){let n=q('#note').value.trim();if(!n)return;data.notes.push(n);save();q('#note').value='';toast('Note gemt')}
+function newConcert(){let n=q('#concertName').value.trim()||'Ny koncert';data.concerts.push({id:Date.now(),name:n,songs:[]});save();q('#concertName').value='';toast('Koncert oprettet')}
+function render(){q('#status').innerHTML='<p>📄 PDF: '+(data.pdf?'🟢 '+esc(data.pdf):'⚪ ikke valgt')+'</p><p>📷 Foto: '+(data.photo?'🟢 '+esc(data.photo):'⚪ ikke valgt')+'</p><p>📚 Sange: '+data.songs.length+'</p><p>🎭 Koncerter: '+data.concerts.length+'</p><p>🧠 OMR-takter: '+data.omr.length+'</p>';
+q('#libraryList').innerHTML=data.songs.length?data.songs.map(s=>'<div class="list"><b>'+esc(s.name)+'</b><div class="small">'+esc(s.sax)+' '+(s.pdf?'• 📄 '+esc(s.pdf):'')+' '+(s.photo?'• 📷 '+esc(s.photo):'')+'</div></div>').join(''):'<p class="small">Ingen sange endnu.</p>';
+q('#concertList').innerHTML=data.concerts.length?data.concerts.map(c=>'<div class="list"><b>'+esc(c.name)+'</b> – '+c.songs.length+' sange</div>').join(''):'<p class="small">Ingen koncerter endnu.</p>';
+q('#notes').innerHTML=data.notes.map(n=>'<div class="small">📝 '+esc(n)+'</div>').join('');
+renderOMR();renderScore()}
+q('#view').onchange=renderScore;q('#sax').onchange=()=>{q('#sax2').value=q('#sax').value;save()};q('#sax2').onchange=()=>{q('#sax').value=q('#sax2').value;save()};
+let timer=null;function play(){stop();let bpm=+q('#bpm').value||80;toast('▶ Demo-afspilning '+bpm+' BPM');timer=setTimeout(()=>toast('Demo-takt færdig'),60000/bpm*4)}function stop(){if(timer)clearTimeout(timer);timer=null}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(()=>q('#sw').textContent='🟢 Service worker aktiv').catch(()=>q('#sw').textContent='⚠️ Kunne ikke registreres');else q('#sw').textContent='⚠️ Ikke understøttet';
+render();
+</script></body></html>
