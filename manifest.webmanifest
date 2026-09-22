@@ -1,1 +1,9 @@
-{"name":"SaxCoach v10","short_name":"SaxCoach","start_url":"./index.html","display":"standalone","background_color":"#eef2ff","theme_color":"#172554"}
+{
+  "name":"SaxCoach v11",
+  "short_name":"SaxCoach",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#0f172a",
+  "theme_color":"#111827",
+  "lang":"da"
+}

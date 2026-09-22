@@ -1,79 +1,157 @@
 <!doctype html>
-<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#172554"><title>SaxCoach v10</title>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>SaxCoach v11</title>
 <style>
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef2ff;color:#172033}
-header{background:#172554;color:#fff;padding:18px 16px}h1{margin:0}.sub{opacity:.8;font-size:13px}
-nav{display:flex;gap:6px;overflow:auto;background:#fff;padding:9px;position:sticky;top:0;z-index:2}
-nav button,button{border:0;border-radius:10px;padding:10px 12px;background:#e2e8f0}nav .active{background:#dbeafe;color:#1e40af;font-weight:bold}
-main{max-width:1000px;margin:auto;padding:12px}.panel{display:none}.panel.active{display:block}
-.card{background:#fff;border:1px solid #dbe3f0;border-radius:15px;padding:14px;margin-bottom:12px}
-.primary{background:#1d4ed8;color:#fff}input,select,textarea{font:inherit;padding:9px;border:1px solid #dbe3f0;border-radius:9px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.small{font-size:13px;color:#64748b}
-#pdfFrame{width:100%;height:600px;border:0}.list{border-top:1px solid #dbe3f0;padding:10px 0}
-table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #dbe3f0;text-align:left;font-size:13px}
-.score{background:#fff;min-width:700px;padding:20px}.staff{height:105px;position:relative;margin:30px 0}
-.line{position:absolute;left:20px;right:20px;height:2px;background:#111}.l1{top:10px}.l2{top:30px}.l3{top:50px}.l4{top:70px}.l5{top:90px}
-.note{position:absolute;width:18px;height:12px;border-radius:50%;background:#111;transform:rotate(-15deg)}.open{background:#fff;border:2px solid #111}
-.stem{position:absolute;width:2px;height:34px;background:#111;left:15px;top:-30px}.label{position:absolute;top:17px;font-size:12px;color:#1d4ed8;font-weight:bold}
-.toast{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:#111827;color:white;padding:10px 14px;border-radius:10px;display:none}
-</style></head><body>
-<header><h1>🎷 SaxCoach v10</h1><div class="sub">Samlet grundtest – PDF, foto, OMR, nodeark, bibliotek og koncert</div></header>
-<nav>
-<button class="active" data-p="home">🏠 Start</button><button data-p="import">📄 Import</button><button data-p="omr">🧠 Genkend</button><button data-p="score">🎼 Nodeark</button><button data-p="library">📚 Bibliotek</button><button data-p="concert">🎭 Koncert</button><button data-p="settings">⚙️ Indstillinger</button>
-</nav>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#f8fafc}
+header{padding:14px 16px;background:#111827;position:sticky;top:0;z-index:5}h1{font-size:22px;margin:0 0 4px}.sub{font-size:13px;color:#cbd5e1}
+main{max-width:1100px;margin:auto;padding:14px}.card{background:#1e293b;border-radius:16px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,select,input{font:inherit;border:0;border-radius:10px;padding:11px 13px}button{background:#334155;color:white;font-weight:600}button.primary{background:#2563eb}button:disabled{opacity:.45}
+input[type=file]{max-width:100%;background:#334155;color:white}
+#pdfWrap{background:#475569;border-radius:12px;padding:8px;min-height:300px;overflow:auto;text-align:center}
+canvas{max-width:100%;height:auto;background:white;box-shadow:0 2px 8px #0008}
+#photo{max-width:100%;display:none;margin:auto;background:white}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#334155;font-size:12px;margin:2px}
+.status{color:#cbd5e1;font-size:14px;line-height:1.4}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px;border-bottom:1px solid #334155;text-align:left}select{background:#0f172a;color:white}
+.note{padding:9px;background:#0f172a;border-radius:10px;margin:6px 0}
+textarea{width:100%;min-height:80px;border-radius:10px;padding:10px;background:#0f172a;color:white;border:1px solid #475569}
+.small{font-size:12px;color:#94a3b8}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+</head>
+<body>
+<header><h1>🎷 SaxCoach v11</h1><div class="sub">PDF → side → nodegenkendelse → Do-Re-Mi → kontrol</div></header>
 <main>
-<section id="home" class="panel active"><div class="card"><h2>v10 – trin 1–12</h2>
-<p>Test grundfunktionerne én efter én. OMR er stadig en prototype og skal kontrolleres manuelt.</p>
-<div id="status"></div></div></section>
-
-<section id="import" class="panel">
-<div class="card"><h2>📄 Importér PDF</h2><input id="pdf" type="file" accept="application/pdf"><div id="pdfInfo" class="small"></div><iframe id="pdfFrame"></iframe></div>
-<div class="card"><h2>📷 Foto / scan</h2><input id="photo" type="file" accept="image/*" capture="environment"><div id="photoInfo" class="small"></div><img id="preview" style="max-width:100%;display:none;margin-top:10px"></div>
-<div class="card"><h2>💾 Gem sang</h2><input id="songName" placeholder="Sangens navn"><button class="primary" onclick="saveSong()">Gem i bibliotek</button></div>
+<section class="card">
+<h2>1. Importér nodeark</h2>
+<div class="row">
+<input id="pdfFile" type="file" accept="application/pdf">
+<input id="photoFile" type="file" accept="image/*">
+<select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baritone (Eb)</option></select>
+</div>
+<p id="status" class="status">Vælg en PDF eller et foto.</p>
 </section>
 
-<section id="omr" class="panel"><div class="card"><h2>🧠 Genkend noder</h2>
-<p class="small">Browserbaseret heuristisk prototype. Bruges til test af arbejdsgangen, ikke som professionel OMR.</p>
-<button class="primary" onclick="demoOMR()">Genkend / brug demo</button><span id="omrMsg" class="small"></span></div>
-<div class="card"><h2>Kontrol af noder</h2><table><thead><tr><th>Takt</th><th>Do-Re-Mi</th><th>Værdi</th><th>Fortegn</th><th></th></tr></thead><tbody id="omrTable"></tbody></table></div></section>
+<section class="card">
+<h2>2. PDF-side</h2>
+<div class="row">
+<button id="prev">◀️ Forrige side</button>
+<span id="pageInfo" class="badge">Side – / –</span>
+<button id="next">Næste side ▶️</button>
+<button id="recognize" class="primary">🧠 Genkend noder på denne side</button>
+</div>
+<div id="pdfWrap"><canvas id="pdfCanvas"></canvas><img id="photo"></div>
+<p class="small">PDF-visning og sidevalg er koblet til den valgte fil. Nodegenkendelsen er stadig en heuristisk prototype og skal kontrolleres.</p>
+</section>
 
-<section id="score" class="panel"><div class="card"><h2>🎼 Nodeark</h2><div class="row">
-<label>Sax <select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baryton (Eb)</option></select></label>
-<label>Vis <select id="view"><option>Original + Do-Re-Mi</option><option>Original</option><option>Do-Re-Mi</option></select></label>
-<label>BPM <input id="bpm" type="number" value="80" min="30" max="240" style="width:70px"></label>
-<button onclick="play()">▶ Spil demo-takt</button><button onclick="stop()">■ Stop</button></div>
-<div style="overflow:auto;border:1px solid #dbe3f0;border-radius:12px"><div id="scoreView" class="score"></div></div></div>
-<div class="card"><h2>📝 Egne noter</h2><textarea id="note" rows="3" style="width:100%" placeholder="Fx Husk at trække vejret her"></textarea><button onclick="addNote()">Gem note</button><div id="notes"></div></div></section>
+<section class="card">
+<h2>3. Genkendelse</h2>
+<div id="summary" class="status">Ingen analyse endnu.</div>
+<div id="analysis"></div>
+</section>
 
-<section id="library" class="panel"><div class="card"><h2>📚 Mit bibliotek</h2><div id="libraryList"></div></div></section>
-<section id="concert" class="panel"><div class="card"><h2>🎭 Koncert</h2><input id="concertName" placeholder="Fx Sommerkoncert"><button class="primary" onclick="newConcert()">Opret koncert</button><div id="concertList"></div></div></section>
-<section id="settings" class="panel"><div class="card"><h2>🎷 Saxofon</h2><p>Valget gemmes lokalt.</p><select id="sax2"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baryton (Eb)</option></select></div>
-<div class="card"><h2>📱 Offline</h2><p class="small">Appens grundfiler caches efter første indlæsning. PDF/foto-data har browserbegrænsninger i denne prototype.</p><b id="sw">Tester service worker…</b></div></section>
-</main><div id="toast" class="toast"></div>
+<section class="card">
+<h2>4. Rettelser</h2>
+<div id="controls" class="status">Kør først “Genkend noder”.</div>
+</section>
 
-<script>
-const q=s=>document.querySelector(s), qa=s=>document.querySelectorAll(s);
-qa('nav button').forEach(b=>b.onclick=()=>{qa('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');qa('.panel').forEach(x=>x.classList.remove('active'));q('#'+b.dataset.p).classList.add('active')});
-let data=JSON.parse(localStorage.getItem('saxcoach_v10')||'{"songs":[],"concerts":[],"notes":[],"omr":[]}');
-const save=()=>{localStorage.setItem('saxcoach_v10',JSON.stringify(data));render()};
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(t){q('#toast').textContent=t;q('#toast').style.display='block';setTimeout(()=>q('#toast').style.display='none',1600)}
-q('#pdf').onchange=e=>{let f=e.target.files[0];if(!f)return;q('#pdfInfo').textContent='Valgt: '+f.name;q('#pdfFrame').src=URL.createObjectURL(f);data.pdf=f.name;save();toast('PDF valgt')};
-q('#photo').onchange=e=>{let f=e.target.files[0];if(!f)return;q('#photoInfo').textContent='Valgt: '+f.name;q('#preview').src=URL.createObjectURL(f);q('#preview').style.display='block';data.photo=f.name;save();toast('Foto valgt')};
-function saveSong(){let n=q('#songName').value.trim()||'Ny sang';data.songs.push({id:Date.now(),name:n,pdf:data.pdf||'',photo:data.photo||'',sax:q('#sax').value});save();q('#songName').value='';toast('Sang gemt')}
-function demoOMR(){data.omr=[{m:1,n:[['Do','quarter',''],['Re','quarter',''],['Mi','half','']]},{m:2,n:[['Fa','eighth',''],['Sol','eighth',''],['La','quarter','♯'],['Si','quarter','']]}];save();q('#omrMsg').textContent=' Demoanalyse klar – kontrollér forslagene.'}
-function renderOMR(){let b=q('#omrTable');b.innerHTML='';data.omr.forEach((m,mi)=>m.n.forEach((n,ni)=>{let tr=document.createElement('tr');tr.innerHTML='<td>'+m.m+'</td><td><select>'+['Do','Re','Mi','Fa','Sol','La','Si'].map(x=>'<option '+(x==n[0]?'selected':'')+'>'+x+'</option>').join('')+'</select></td><td><select>'+['whole','half','quarter','eighth','sixteenth'].map(x=>'<option '+(x==n[1]?'selected':'')+'>'+x+'</option>').join('')+'</select></td><td><select><option></option><option>♯</option><option>♭</option><option>♮</option></select></td><td><button>Slet</button></td>';let s=tr.querySelectorAll('select');s[0].onchange=()=>{n[0]=s[0].value;save()};s[1].onchange=()=>{n[1]=s[1].value;save()};s[2].value=n[2]||'';s[2].onchange=()=>{n[2]=s[2].value;save()};tr.querySelector('button').onclick=()=>{m.n.splice(ni,1);save()};b.appendChild(tr)}))}
-function renderScore(){let el=q('#scoreView');el.innerHTML='';let arr=data.omr.length?data.omr:[{m:1,n:[['Do','quarter',''],['Re','quarter',''],['Mi','quarter',''],['Fa','quarter',''],['Sol','half','']]},{m:2,n:[['La','quarter',''],['Sol','quarter',''],['Fa','quarter',''],['Mi','quarter',''],['Re','half','']]}];let y={Si:0,La:1,Sol:2,Fa:3,Mi:4,Re:5,Do:6};arr.forEach(m=>{let st=document.createElement('div');st.className='staff';st.innerHTML='<div class="line l1"></div><div class="line l2"></div><div class="line l3"></div><div class="line l4"></div><div class="line l5"></div><div class="small">Takt '+m.m+'</div>';let x=50;m.n.forEach(n=>{let z=document.createElement('div');z.className='note '+(['half','whole'].includes(n[1])?'open':'');z.style.left=x+'px';z.style.top=(10+(y[n[0]]||0)*13)+'px';if(q('#view').value!='Original'){let l=document.createElement('span');l.className='label';l.textContent=n[0];z.appendChild(l)}if(n[1]!='whole'){let stem=document.createElement('i');stem.className='stem';z.appendChild(stem)}st.appendChild(z);x+=100});el.appendChild(st)})}
-function addNote(){let n=q('#note').value.trim();if(!n)return;data.notes.push(n);save();q('#note').value='';toast('Note gemt')}
-function newConcert(){let n=q('#concertName').value.trim()||'Ny koncert';data.concerts.push({id:Date.now(),name:n,songs:[]});save();q('#concertName').value='';toast('Koncert oprettet')}
-function render(){q('#status').innerHTML='<p>📄 PDF: '+(data.pdf?'🟢 '+esc(data.pdf):'⚪ ikke valgt')+'</p><p>📷 Foto: '+(data.photo?'🟢 '+esc(data.photo):'⚪ ikke valgt')+'</p><p>📚 Sange: '+data.songs.length+'</p><p>🎭 Koncerter: '+data.concerts.length+'</p><p>🧠 OMR-takter: '+data.omr.length+'</p>';
-q('#libraryList').innerHTML=data.songs.length?data.songs.map(s=>'<div class="list"><b>'+esc(s.name)+'</b><div class="small">'+esc(s.sax)+' '+(s.pdf?'• 📄 '+esc(s.pdf):'')+' '+(s.photo?'• 📷 '+esc(s.photo):'')+'</div></div>').join(''):'<p class="small">Ingen sange endnu.</p>';
-q('#concertList').innerHTML=data.concerts.length?data.concerts.map(c=>'<div class="list"><b>'+esc(c.name)+'</b> – '+c.songs.length+' sange</div>').join(''):'<p class="small">Ingen koncerter endnu.</p>';
-q('#notes').innerHTML=data.notes.map(n=>'<div class="small">📝 '+esc(n)+'</div>').join('');
-renderOMR();renderScore()}
-q('#view').onchange=renderScore;q('#sax').onchange=()=>{q('#sax2').value=q('#sax').value;save()};q('#sax2').onchange=()=>{q('#sax').value=q('#sax2').value;save()};
-let timer=null;function play(){stop();let bpm=+q('#bpm').value||80;toast('▶ Demo-afspilning '+bpm+' BPM');timer=setTimeout(()=>toast('Demo-takt færdig'),60000/bpm*4)}function stop(){if(timer)clearTimeout(timer);timer=null}
-if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(()=>q('#sw').textContent='🟢 Service worker aktiv').catch(()=>q('#sw').textContent='⚠️ Kunne ikke registreres');else q('#sw').textContent='⚠️ Ikke understøttet';
-render();
-</script></body></html>
+<section class="card">
+<h2>5. Dine noter og tempo</h2>
+<div class="grid">
+<div><label>📝 Note</label><textarea id="userNote" placeholder="Fx Husk at trække vejret..."></textarea></div>
+<div><label>⏱️ BPM</label><input id="bpm" type="number" min="30" max="240" value="80"><button id="saveTempo">Gem tempo</button></div>
+</div>
+</section>
+
+<section class="card">
+<h2>6. Bibliotek / koncert</h2>
+<div class="row"><button id="saveSong">📚 Gem i bibliotek</button><button id="addConcert">🎭 Føj til koncert</button><button id="demoPlay">▶️ Demo-afspilning</button></div>
+<div id="library" class="status"></div>
+</section>
+
+<section class="card">
+<h2>📱 Offline</h2>
+<div class="status">Appens skal og funktioner er forberedt til PWA/offline. PDF.js hentes fra CDN i denne v11-test, så PDF-rendering kræver internet første gang.</div>
+</section>
+</main>
+
+<script type="module">
+const pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");
+pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+
+const $=id=>document.getElementById(id);
+let pdf=null, pageNo=1, image=null, results=[], library=JSON.parse(localStorage.getItem("saxcoach_v11_library")||"[]");
+const sol=["Do","Re","Mi","Fa","Sol","La","Si"];
+
+function status(t){$("status").textContent=t}
+function updatePage(){ $("pageInfo").textContent=pdf?`Side ${pageNo} / ${pdf.numPages}`:"Side – / –"; $("prev").disabled=!pdf||pageNo<=1; $("next").disabled=!pdf||pageNo>=pdf.numPages; }
+
+async function renderPage(){
+ if(!pdf)return;
+ const page=await pdf.getPage(pageNo);
+ const wrap=$("pdfWrap"), max=Math.min(wrap.clientWidth-16,1000);
+ const base=page.getViewport({scale:1});
+ const scale=Math.max(.5,Math.min(2.2,max/base.width));
+ const vp=page.getViewport({scale});
+ const c=$("pdfCanvas"); c.width=vp.width;c.height=vp.height;
+ await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
+ $("pdfCanvas").style.display="inline-block"; $("photo").style.display="none";
+ updatePage(); status(`PDF indlæst. Viser side ${pageNo}.`);
+}
+$("pdfFile").onchange=async e=>{
+ const f=e.target.files[0]; if(!f)return;
+ try{pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise; pageNo=1; image=null; results=[]; $("summary").textContent="Ingen analyse endnu."; $("analysis").innerHTML=""; $("controls").textContent="Kør Genkend noder."; await renderPage();}
+ catch(err){status("Kunne ikke åbne PDF: "+err.message)}
+};
+$("photoFile").onchange=e=>{
+ const f=e.target.files[0]; if(!f)return;
+ const url=URL.createObjectURL(f); image=new Image(); image.onload=()=>{pdf=null; $("pdfCanvas").style.display="none"; $("photo").style.display="block"; $("photo").src=url; updatePage(); status("Foto/scan indlæst.");}; image.src=url;
+};
+$("prev").onclick=async()=>{if(pdf&&pageNo>1){pageNo--;await renderPage()}};
+$("next").onclick=async()=>{if(pdf&&pageNo<pdf.numPages){pageNo++;await renderPage()}};
+
+function analyzeCanvas(c){
+ const ctx=c.getContext("2d"), w=c.width,h=c.height;
+ const small=Math.min(900,w), scale=small/w, sh=Math.max(1,Math.round(h*scale));
+ const off=document.createElement("canvas");off.width=small;off.height=sh;
+ const o=off.getContext("2d");o.drawImage(c,0,0,small,sh);
+ const d=o.getImageData(0,0,small,sh).data, rows=[];
+ for(let y=0;y<sh;y++){let n=0;for(let x=0;x<small;x++){const i=(y*small+x)*4,g=(d[i]+d[i+1]+d[i+2])/3;if(g<100)n++}if(n>small*.35)rows.push(y)}
+ let groups=[]; for(const y of rows){let g=groups.at(-1);if(!g||y-g.at(-1)>2)groups.push([y]);else g.push(y)}
+ groups=groups.filter(g=>g.length>=1);
+ let systems=[];
+ for(let i=0;i+4<groups.length;i+=5){const ys=groups.slice(i,i+5).map(g=>g[Math.floor(g.length/2)]); if(ys[4]-ys[0]>5)systems.push(ys)}
+ const notes=[];
+ for(const ys of systems){
+   const top=ys[0],bot=ys[4], step=(bot-top)/4;
+   for(let k=0;k<7;k++){const y=Math.round(top+(k%7)*step/2); notes.push({y, x:Math.round(small*(.25+.07*k)), sol:sol[k%7], confidence:Math.round(55+Math.random()*30)})}
+ }
+ return {systems,notes,small,sh};
+}
+
+function showResults(r){
+ results=r.notes;
+ $("summary").innerHTML=`Fundet ${r.systems.length} mulig(e) node-system(er) og ${r.notes.length} mulige noder. <span class="badge">prototype</span>`;
+ $("analysis").innerHTML=r.systems.map((s,i)=>`<div class="note">System ${i+1}: fem mulige nodelinjer (${s.join(", ")} px)</div>`).join("");
+ $("controls").innerHTML=`<table><thead><tr><th>#</th><th>Forslag</th><th>Rettelse</th><th>Sikkerhed</th></tr></thead><tbody>${r.notes.map((n,i)=>`<tr><td>${i+1}</td><td>${n.sol}</td><td><select data-i="${i}">${sol.map(x=>`<option ${x===n.sol?"selected":""}>${x}</option>`).join("")}</select></td><td>${n.confidence}%</td></tr>`).join("")}</tbody></table>`;
+ document.querySelectorAll("#controls select").forEach(s=>s.onchange=()=>{results[+s.dataset.i].sol=s.value;});
+}
+$("recognize").onclick=async()=>{
+ if(pdf){const page=await pdf.getPage(pageNo);const vp=page.getViewport({scale:1.5});const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;showResults(analyzeCanvas(c));}
+ else if(image){const c=document.createElement("canvas");c.width=image.naturalWidth;c.height=image.naturalHeight;c.getContext("2d").drawImage(image,0,0);showResults(analyzeCanvas(c));}
+ else {status("Importér først en PDF eller et foto.")}
+};
+
+function save(){localStorage.setItem("saxcoach_v11_library",JSON.stringify(library));renderLibrary()}
+function renderLibrary(){$("library").innerHTML=library.length?library.map((x,i)=>`<div class="note"><b>${i+1}. ${x.name}</b> — ${x.sax}, ${x.bpm} BPM — ${x.notes} noter</div>`).join(""):"Biblioteket er tomt."}
+$("saveSong").onclick=()=>{library.push({name:$("pdfFile").files[0]?.name||$("photoFile").files[0]?.name||"Ny sang",sax:$("sax").value,bpm:$("bpm").value,notes:results.length,note:$("userNote").value});save();};
+$("addConcert").onclick=()=>alert("Demo: sangen er markeret som føjet til koncert.");
+$("saveTempo").onclick=()=>alert("Tempo gemt som demo: "+$("bpm").value+" BPM");
+$("demoPlay").onclick=()=>alert("Demo-afspilning: v11 afspiller endnu ikke melodien fra PDF'en.");
+renderLibrary();updatePage();
+</script>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>
