@@ -4,154 +4,235 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>SaxCoach v11</title>
+<title>SaxCoach v11.1</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#f8fafc}
-header{padding:14px 16px;background:#111827;position:sticky;top:0;z-index:5}h1{font-size:22px;margin:0 0 4px}.sub{font-size:13px;color:#cbd5e1}
-main{max-width:1100px;margin:auto;padding:14px}.card{background:#1e293b;border-radius:16px;padding:14px;margin-bottom:14px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,select,input{font:inherit;border:0;border-radius:10px;padding:11px 13px}button{background:#334155;color:white;font-weight:600}button.primary{background:#2563eb}button:disabled{opacity:.45}
-input[type=file]{max-width:100%;background:#334155;color:white}
-#pdfWrap{background:#475569;border-radius:12px;padding:8px;min-height:300px;overflow:auto;text-align:center}
-canvas{max-width:100%;height:auto;background:white;box-shadow:0 2px 8px #0008}
-#photo{max-width:100%;display:none;margin:auto;background:white}
-.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#334155;font-size:12px;margin:2px}
-.status{color:#cbd5e1;font-size:14px;line-height:1.4}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px;border-bottom:1px solid #334155;text-align:left}select{background:#0f172a;color:white}
-.note{padding:9px;background:#0f172a;border-radius:10px;margin:6px 0}
-textarea{width:100%;min-height:80px;border-radius:10px;padding:10px;background:#0f172a;color:white;border:1px solid #475569}
-.small{font-size:12px;color:#94a3b8}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#eef2f7;color:#172033}
+header{background:#111827;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
+h1{margin:0;font-size:22px}.sub{font-size:12px;opacity:.8}
+main{padding:12px;max-width:1100px;margin:auto}.card{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px #0001}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select,input{font-size:16px;border-radius:10px;border:1px solid #cbd5e1;padding:9px 11px;background:#fff}
+button{background:#e5e7eb;cursor:pointer}button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+button:disabled{opacity:.4}.small{font-size:13px;color:#475569}
+.stage{overflow:auto;text-align:center;border:1px solid #cbd5e1;border-radius:12px;background:#dbe2ea;padding:8px;position:relative}
+#pdfCanvas{max-width:100%;height:auto;display:block;margin:auto;background:#fff}
+#overlay{position:absolute;left:0;top:0;pointer-events:none}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e0f2fe;margin:2px;font-size:13px}
+.ok{color:#047857}.err{color:#b91c1c}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px;border-bottom:1px solid #e5e7eb;text-align:left}
+.progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden}.bar{height:100%;width:0;background:#2563eb}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
 </head>
 <body>
-<header><h1>🎷 SaxCoach v11</h1><div class="sub">PDF → side → nodegenkendelse → Do-Re-Mi → kontrol</div></header>
+<header><h1>🎷 SaxCoach v11.1</h1><div class="sub">PDF → staff-linjer → nodehoveder → Do-Re-Mi · OMR prototype</div></header>
 <main>
-<section class="card">
-<h2>1. Importér nodeark</h2>
-<div class="row">
-<input id="pdfFile" type="file" accept="application/pdf">
-<input id="photoFile" type="file" accept="image/*">
-<select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baritone (Eb)</option></select>
+<div class="card">
+ <div class="row">
+  <label>📄 <input id="pdfInput" type="file" accept="application/pdf"></label>
+  <label>📷 <input id="imgInput" type="file" accept="image/*"></label>
+  <select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baritone (Eb)</option></select>
+ </div>
+ <div class="small" style="margin-top:8px">Vælg PDF eller foto/scan. Den valgte side bruges direkte som analysegrundlag.</div>
 </div>
-<p id="status" class="status">Vælg en PDF eller et foto.</p>
-</section>
 
-<section class="card">
-<h2>2. PDF-side</h2>
-<div class="row">
-<button id="prev">◀️ Forrige side</button>
-<span id="pageInfo" class="badge">Side – / –</span>
-<button id="next">Næste side ▶️</button>
-<button id="recognize" class="primary">🧠 Genkend noder på denne side</button>
+<div class="card">
+ <div class="row">
+  <button id="prev">◀️ Forrige</button>
+  <strong id="pageInfo">Side – / –</strong>
+  <button id="next">Næste ▶️</button>
+  <button class="primary" id="analyze">🧠 Find noder på siden</button>
+  <button id="clear">Ryd analyse</button>
+ </div>
+ <div class="progress" style="margin-top:10px"><div class="bar" id="bar"></div></div>
+ <div id="status" class="small" style="margin-top:8px">Indlæs en PDF eller et foto.</div>
 </div>
-<div id="pdfWrap"><canvas id="pdfCanvas"></canvas><img id="photo"></div>
-<p class="small">PDF-visning og sidevalg er koblet til den valgte fil. Nodegenkendelsen er stadig en heuristisk prototype og skal kontrolleres.</p>
-</section>
 
-<section class="card">
-<h2>3. Genkendelse</h2>
-<div id="summary" class="status">Ingen analyse endnu.</div>
-<div id="analysis"></div>
-</section>
-
-<section class="card">
-<h2>4. Rettelser</h2>
-<div id="controls" class="status">Kør først “Genkend noder”.</div>
-</section>
-
-<section class="card">
-<h2>5. Dine noter og tempo</h2>
-<div class="grid">
-<div><label>📝 Note</label><textarea id="userNote" placeholder="Fx Husk at trække vejret..."></textarea></div>
-<div><label>⏱️ BPM</label><input id="bpm" type="number" min="30" max="240" value="80"><button id="saveTempo">Gem tempo</button></div>
+<div class="card">
+ <div class="stage" id="stage">
+  <canvas id="pdfCanvas"></canvas><canvas id="overlay"></canvas>
+ </div>
 </div>
-</section>
 
-<section class="card">
-<h2>6. Bibliotek / koncert</h2>
-<div class="row"><button id="saveSong">📚 Gem i bibliotek</button><button id="addConcert">🎭 Føj til koncert</button><button id="demoPlay">▶️ Demo-afspilning</button></div>
-<div id="library" class="status"></div>
-</section>
+<div class="card">
+ <h3 style="margin-top:0">🔎 Analyse</h3>
+ <div id="summary" class="small">Ingen analyse endnu.</div>
+</div>
 
-<section class="card">
-<h2>📱 Offline</h2>
-<div class="status">Appens skal og funktioner er forberedt til PWA/offline. PDF.js hentes fra CDN i denne v11-test, så PDF-rendering kræver internet første gang.</div>
-</section>
+<div class="card">
+ <h3 style="margin-top:0">✏️ Kontrol af fundne noder</h3>
+ <div class="small">Ret Do-Re-Mi-forslagene manuelt. Rettelser gemmes i denne session.</div>
+ <div id="table"></div>
+</div>
+
+<div class="card">
+ <h3 style="margin-top:0">📚 Bibliotek / noter / tempo</h3>
+ <div class="row">
+  <input id="songName" placeholder="Sangens navn">
+  <button id="saveSong">Gem i bibliotek</button>
+  <button id="addNote">📝 Tilføj note</button>
+  <button id="addTempo">⏱️ Tilføj tempo</button>
+ </div>
+ <div id="library" class="small" style="margin-top:8px"></div>
+</div>
 </main>
 
 <script type="module">
-const pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
 pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
 
 const $=id=>document.getElementById(id);
-let pdf=null, pageNo=1, image=null, results=[], library=JSON.parse(localStorage.getItem("saxcoach_v11_library")||"[]");
-const sol=["Do","Re","Mi","Fa","Sol","La","Si"];
+const canvas=$("pdfCanvas"),ctx=canvas.getContext("2d");
+const overlay=$("overlay"),octx=overlay.getContext("2d");
+let pdf=null,page=1,scale=1.5,imageMode=false,nodes=[],systems=[];
+
+const notes=["Do","Re","Mi","Fa","Sol","La","Si"];
 
 function status(t){$("status").textContent=t}
-function updatePage(){ $("pageInfo").textContent=pdf?`Side ${pageNo} / ${pdf.numPages}`:"Side – / –"; $("prev").disabled=!pdf||pageNo<=1; $("next").disabled=!pdf||pageNo>=pdf.numPages; }
+function progress(n){$("bar").style.width=n+"%"}
+function resizeOverlay(){
+ overlay.width=canvas.width; overlay.height=canvas.height;
+ overlay.style.width=canvas.clientWidth+"px"; overlay.style.height=canvas.clientHeight+"px";
+}
+function clearOverlay(){octx.clearRect(0,0,overlay.width,overlay.height)}
+function updatePageInfo(){$("pageInfo").textContent=pdf?`Side ${page} / ${pdf.numPages}`:(imageMode?"Foto / scan":"Side – / –")}
+
+$("pdfInput").onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{
+  status("Indlæser PDF…");progress(15);
+  pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+  page=1;imageMode=false;await renderPage();
+  status("PDF indlæst. Tryk “Find noder på siden”.");progress(100);
+ }catch(err){status("PDF-fejl: "+err.message);progress(0)}
+};
+
+$("imgInput").onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const im=new Image();
+ im.onload=()=>{
+  pdf=null;imageMode=true;canvas.width=im.naturalWidth;canvas.height=im.naturalHeight;
+  ctx.drawImage(im,0,0);resizeOverlay();updatePageInfo();
+  status("Foto/scan indlæst. Tryk “Find noder på siden”.");
+ };
+ im.src=URL.createObjectURL(f);
+};
 
 async function renderPage(){
- if(!pdf)return;
- const page=await pdf.getPage(pageNo);
- const wrap=$("pdfWrap"), max=Math.min(wrap.clientWidth-16,1000);
- const base=page.getViewport({scale:1});
- const scale=Math.max(.5,Math.min(2.2,max/base.width));
- const vp=page.getViewport({scale});
- const c=$("pdfCanvas"); c.width=vp.width;c.height=vp.height;
- await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
- $("pdfCanvas").style.display="inline-block"; $("photo").style.display="none";
- updatePage(); status(`PDF indlæst. Viser side ${pageNo}.`);
+ const p=await pdf.getPage(page),vp=p.getViewport({scale});
+ canvas.width=vp.width;canvas.height=vp.height;
+ await p.render({canvasContext:ctx,viewport:vp}).promise;
+ resizeOverlay();updatePageInfo();clearOverlay();nodes=[];systems=[];renderTable();
 }
-$("pdfFile").onchange=async e=>{
- const f=e.target.files[0]; if(!f)return;
- try{pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise; pageNo=1; image=null; results=[]; $("summary").textContent="Ingen analyse endnu."; $("analysis").innerHTML=""; $("controls").textContent="Kør Genkend noder."; await renderPage();}
- catch(err){status("Kunne ikke åbne PDF: "+err.message)}
-};
-$("photoFile").onchange=e=>{
- const f=e.target.files[0]; if(!f)return;
- const url=URL.createObjectURL(f); image=new Image(); image.onload=()=>{pdf=null; $("pdfCanvas").style.display="none"; $("photo").style.display="block"; $("photo").src=url; updatePage(); status("Foto/scan indlæst.");}; image.src=url;
-};
-$("prev").onclick=async()=>{if(pdf&&pageNo>1){pageNo--;await renderPage()}};
-$("next").onclick=async()=>{if(pdf&&pageNo<pdf.numPages){pageNo++;await renderPage()}};
+$("prev").onclick=async()=>{if(pdf&&page>1){page--;await renderPage()}};
+$("next").onclick=async()=>{if(pdf&&page<pdf.numPages){page++;await renderPage()}};
 
-function analyzeCanvas(c){
- const ctx=c.getContext("2d"), w=c.width,h=c.height;
- const small=Math.min(900,w), scale=small/w, sh=Math.max(1,Math.round(h*scale));
- const off=document.createElement("canvas");off.width=small;off.height=sh;
- const o=off.getContext("2d");o.drawImage(c,0,0,small,sh);
- const d=o.getImageData(0,0,small,sh).data, rows=[];
- for(let y=0;y<sh;y++){let n=0;for(let x=0;x<small;x++){const i=(y*small+x)*4,g=(d[i]+d[i+1]+d[i+2])/3;if(g<100)n++}if(n>small*.35)rows.push(y)}
- let groups=[]; for(const y of rows){let g=groups.at(-1);if(!g||y-g.at(-1)>2)groups.push([y]);else g.push(y)}
- groups=groups.filter(g=>g.length>=1);
- let systems=[];
- for(let i=0;i+4<groups.length;i+=5){const ys=groups.slice(i,i+5).map(g=>g[Math.floor(g.length/2)]); if(ys[4]-ys[0]>5)systems.push(ys)}
- const notes=[];
- for(const ys of systems){
-   const top=ys[0],bot=ys[4], step=(bot-top)/4;
-   for(let k=0;k<7;k++){const y=Math.round(top+(k%7)*step/2); notes.push({y, x:Math.round(small*(.25+.07*k)), sol:sol[k%7], confidence:Math.round(55+Math.random()*30)})}
+function grayPixels(){
+ const d=ctx.getImageData(0,0,canvas.width,canvas.height).data,w=canvas.width,h=canvas.height,g=new Uint8Array(w*h);
+ for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+ return {g,w,h};
+}
+
+/* M2: staff lines. This is deliberately conservative: five closely spaced
+   horizontal dark bands are treated as a possible staff system. */
+function detectStaffLines(g,w,h){
+ const candidates=[];
+ for(let y=2;y<h-2;y++){
+  let dark=0;
+  for(let x=0;x<w;x+=2)if(g[y*w+x]<120)dark++;
+  if(dark/(w/2)>.42)candidates.push(y);
  }
- return {systems,notes,small,sh};
+ const groups=[];
+ for(const y of candidates){
+  if(!groups.length||y-groups[groups.length-1][groups[groups.length-1].length-1]>4)groups.push([y]);
+  else groups[groups.length-1].push(y);
+ }
+ const centers=groups.map(a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length));
+ const out=[];
+ for(let i=0;i<centers.length-4;i++){
+  const five=centers.slice(i,i+5),d=(five[4]-five[0])/4;
+  if(d>=3&&d<=45&&five.every((v,j)=>j===0||Math.abs((v-five[0])-j*d)<d*.5)){out.push(five);i+=4}
+ }
+ return out;
 }
 
-function showResults(r){
- results=r.notes;
- $("summary").innerHTML=`Fundet ${r.systems.length} mulig(e) node-system(er) og ${r.notes.length} mulige noder. <span class="badge">prototype</span>`;
- $("analysis").innerHTML=r.systems.map((s,i)=>`<div class="note">System ${i+1}: fem mulige nodelinjer (${s.join(", ")} px)</div>`).join("");
- $("controls").innerHTML=`<table><thead><tr><th>#</th><th>Forslag</th><th>Rettelse</th><th>Sikkerhed</th></tr></thead><tbody>${r.notes.map((n,i)=>`<tr><td>${i+1}</td><td>${n.sol}</td><td><select data-i="${i}">${sol.map(x=>`<option ${x===n.sol?"selected":""}>${x}</option>`).join("")}</select></td><td>${n.confidence}%</td></tr>`).join("")}</tbody></table>`;
- document.querySelectorAll("#controls select").forEach(s=>s.onchange=()=>{results[+s.dataset.i].sol=s.value;});
+/* M3: compact dark connected components around a staff system. */
+function detectNoteheads(g,w,h,sys){
+ const spacing=(sys[4]-sys[0])/4,lo=Math.max(1,Math.floor(sys[0]-spacing)),hi=Math.min(h-2,Math.ceil(sys[4]+spacing));
+ const seen=new Uint8Array(w*h),found=[];
+ const dark=(x,y)=>g[y*w+x]<105;
+ for(let y=lo;y<=hi;y+=2)for(let x=3;x<w-3;x+=2){
+  const start=y*w+x;if(seen[start]||!dark(x,y))continue;
+  let minx=x,maxx=x,miny=y,maxy=y,count=0,stack=[[x,y]];seen[start]=1;
+  while(stack.length){
+   const [cx,cy]=stack.pop();count++;minx=Math.min(minx,cx);maxx=Math.max(maxx,cx);miny=Math.min(miny,cy);maxy=Math.max(maxy,cy);
+   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=cx+dx,ny=cy+dy;if(nx<1||nx>=w-1||ny<lo||ny>hi)continue;
+    const ni=ny*w+nx;if(!seen[ni]&&dark(nx,ny)){seen[ni]=1;stack.push([nx,ny])}
+   }
+  }
+  const ww=maxx-minx+1,hh=maxy-miny+1;
+  if(count>=8&&count<=220&&ww>=3&&ww<=28&&hh>=3&&hh<=20&&ww<spacing*1.35&&hh<spacing*1.2){
+   const cx=(minx+maxx)/2,cy=(miny+maxy)/2;
+   if(!found.some(n=>Math.abs(n.x-cx)<spacing*.7&&Math.abs(n.y-cy)<spacing*.65))found.push({x:cx,y:cy});
+  }
+ }
+ return found;
 }
-$("recognize").onclick=async()=>{
- if(pdf){const page=await pdf.getPage(pageNo);const vp=page.getViewport({scale:1.5});const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;showResults(analyzeCanvas(c));}
- else if(image){const c=document.createElement("canvas");c.width=image.naturalWidth;c.height=image.naturalHeight;c.getContext("2d").drawImage(image,0,0);showResults(analyzeCanvas(c));}
- else {status("Importér først en PDF eller et foto.")}
+
+/* M4/M5: approximate staff position to solfège. Treble-like mapping only;
+   saxophone transposition is intentionally not applied to this prototype. */
+function pitchFor(y,sys){
+ const spacing=(sys[4]-sys[0])/4;
+ const half=Math.round(((sys[4]-y)/spacing)*2);
+ const names=["Mi","Fa","Sol","La","Si","Do","Re","Mi","Fa"];
+ return names[Math.max(0,Math.min(names.length-1,half))];
+}
+
+function draw(){
+ clearOverlay();octx.lineWidth=2;
+ systems.forEach(s=>{octx.strokeStyle="#2563eb";s.forEach(y=>{octx.beginPath();octx.moveTo(0,y);octx.lineTo(overlay.width,y);octx.stroke()})});
+ octx.font="bold 16px system-ui";
+ nodes.forEach(n=>{octx.fillStyle="#16a34a";octx.beginPath();octx.arc(n.x,n.y,6,0,Math.PI*2);octx.fill();octx.fillStyle="#064e3b";octx.fillText(n.note,n.x+8,n.y-8)});
+}
+
+$("analyze").onclick=()=>{
+ if(!canvas.width){status("Indlæs først en PDF eller et foto.");return}
+ progress(10);status("Finder fem staff-linjer…");
+ const {g,w,h}=grayPixels();systems=detectStaffLines(g,w,h);progress(45);
+ nodes=[];
+ systems.forEach((s,si)=>detectNoteheads(g,w,h,s).forEach(n=>{n.system=si;n.note=pitchFor(n.y,s);n.corrected=n.note;nodes.push(n)}));
+ progress(85);draw();renderTable();
+ $("summary").innerHTML=`<span class="${systems.length?"ok":"err"}">Fundet ${systems.length} mulig(e) node-system(er) og ${nodes.length} mulig(e) node(r).</span> <span class="badge">v11.1 prototype</span>`;
+ status(systems.length&&nodes.length?"Analyse færdig — kontrollér de grønne markeringer.":"Ingen tilstrækkeligt tydelige systemer/noder fundet på denne side. Prøv en skarpere side.");
+ progress(100);
 };
 
-function save(){localStorage.setItem("saxcoach_v11_library",JSON.stringify(library));renderLibrary()}
-function renderLibrary(){$("library").innerHTML=library.length?library.map((x,i)=>`<div class="note"><b>${i+1}. ${x.name}</b> — ${x.sax}, ${x.bpm} BPM — ${x.notes} noter</div>`).join(""):"Biblioteket er tomt."}
-$("saveSong").onclick=()=>{library.push({name:$("pdfFile").files[0]?.name||$("photoFile").files[0]?.name||"Ny sang",sax:$("sax").value,bpm:$("bpm").value,notes:results.length,note:$("userNote").value});save();};
-$("addConcert").onclick=()=>alert("Demo: sangen er markeret som føjet til koncert.");
-$("saveTempo").onclick=()=>alert("Tempo gemt som demo: "+$("bpm").value+" BPM");
-$("demoPlay").onclick=()=>alert("Demo-afspilning: v11 afspiller endnu ikke melodien fra PDF'en.");
-renderLibrary();updatePage();
+$("clear").onclick=()=>{clearOverlay();nodes=[];systems=[];renderTable();$("summary").textContent="Analyse ryddet."};
+
+function renderTable(){
+ if(!nodes.length){$("table").innerHTML='<div class="small">Ingen noder at kontrollere.</div>';return}
+ let h="<table><tr><th>#</th><th>System</th><th>X</th><th>Y</th><th>Forslag</th><th>Ret</th></tr>";
+ nodes.slice(0,200).forEach((n,i)=>{
+  h+=`<tr><td>${i+1}</td><td>${n.system+1}</td><td>${Math.round(n.x)}</td><td>${Math.round(n.y)}</td><td>${n.note}</td><td><select data-i="${i}">${notes.map(x=>`<option ${x===n.corrected?"selected":""}>${x}</option>`).join("")}</select></td></tr>`;
+ });
+ $("table").innerHTML=h+"</table>";
+ $("table").querySelectorAll("select").forEach(s=>s.onchange=()=>{nodes[+s.dataset.i].corrected=s.value;nodes[+s.dataset.i].note=s.value;draw()});
+}
+
+$("saveSong").onclick=()=>{
+ const name=$("songName").value||"Uden navn";
+ const a=JSON.parse(localStorage.getItem("saxcoachSongs")||"[]");
+ a.push({name,sax:$("sax").value,page,nodes:nodes.map(n=>({...n})),saved:new Date().toLocaleString("da-DK")});
+ localStorage.setItem("saxcoachSongs",JSON.stringify(a));renderLibrary();
+};
+$("addNote").onclick=()=>{const t=prompt("Din note:","Husk at trække vejret");if(t)alert("Note gemt i demoen: "+t)};
+$("addTempo").onclick=()=>{const t=prompt("BPM:","80");if(t)alert("Tempo gemt i demoen: "+t+" BPM")};
+
+function renderLibrary(){
+ const a=JSON.parse(localStorage.getItem("saxcoachSongs")||"[]");
+ $("library").innerHTML=a.length?a.map(x=>`<span class="badge">🎵 ${x.name} · ${x.sax} · ${x.nodes.length} noder</span>`).join(""):"Biblioteket er tomt.";
+}
+renderLibrary();
 </script>
-<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>
+</body>
+</html>

@@ -1,4 +1,3 @@
-const CACHE="saxcoach-v11-shell";
-const ASSETS=["./","./index.html","./manifest.webmanifest"];
-self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
-self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match("./index.html")))));
+const CACHE="saxcoach-v11-1-shell";
+self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(["./","./index.html","./manifest.webmanifest"]))));
+self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(x=>{if(e.request.method==="GET"&&x.ok){const c=x.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c));}return x}).catch(()=>caches.match("./index.html")))));
