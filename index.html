@@ -4,27 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>SaxCoach v11.1</title>
+<title>SaxCoach v11.2</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#eef2f7;color:#172033}
-header{background:#111827;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
-h1{margin:0;font-size:22px}.sub{font-size:12px;opacity:.8}
+header{background:#111827;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}h1{margin:0;font-size:22px}.sub{font-size:12px;opacity:.8}
 main{padding:12px;max-width:1100px;margin:auto}.card{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px #0001}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-button,select,input{font-size:16px;border-radius:10px;border:1px solid #cbd5e1;padding:9px 11px;background:#fff}
-button{background:#e5e7eb;cursor:pointer}button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
-button:disabled{opacity:.4}.small{font-size:13px;color:#475569}
-.stage{overflow:auto;text-align:center;border:1px solid #cbd5e1;border-radius:12px;background:#dbe2ea;padding:8px;position:relative}
-#pdfCanvas{max-width:100%;height:auto;display:block;margin:auto;background:#fff}
-#overlay{position:absolute;left:0;top:0;pointer-events:none}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e0f2fe;margin:2px;font-size:13px}
-.ok{color:#047857}.err{color:#b91c1c}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,select,input{font-size:16px;border-radius:10px;border:1px solid #cbd5e1;padding:9px 11px;background:#fff}button{background:#e5e7eb;cursor:pointer}button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+.small{font-size:13px;color:#475569}.stage{overflow:auto;border:1px solid #cbd5e1;border-radius:12px;background:#dbe2ea;padding:8px;position:relative;text-align:left}
+#canvasWrap{position:relative;display:inline-block;line-height:0;background:#fff}#pdfCanvas{display:block;max-width:none}#overlay{position:absolute;left:0;top:0;pointer-events:none}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e0f2fe;margin:2px;font-size:13px}.ok{color:#047857}.err{color:#b91c1c}
 table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px;border-bottom:1px solid #e5e7eb;text-align:left}
 .progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden}.bar{height:100%;width:0;background:#2563eb}
+.notice{padding:10px;border-radius:10px;background:#f1f5f9;margin-top:8px}
 </style>
 </head>
 <body>
-<header><h1>🎷 SaxCoach v11.1</h1><div class="sub">PDF → staff-linjer → nodehoveder → Do-Re-Mi · OMR prototype</div></header>
+<header><h1>🎷 SaxCoach v11.2</h1><div class="sub">Synligt OMR-overlay · staff-linjer · nodehoveder · Do-Re-Mi</div></header>
 <main>
 <div class="card">
  <div class="row">
@@ -32,15 +27,14 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px;borde
   <label>📷 <input id="imgInput" type="file" accept="image/*"></label>
   <select id="sax"><option>Alto (Eb)</option><option>Tenor (Bb)</option><option>Soprano (Bb)</option><option>Baritone (Eb)</option></select>
  </div>
- <div class="small" style="margin-top:8px">Vælg PDF eller foto/scan. Den valgte side bruges direkte som analysegrundlag.</div>
+ <div class="small" style="margin-top:8px">Vælg PDF eller foto/scan. Overlayet er nu et separat synligt lag oven på originalen.</div>
 </div>
 
 <div class="card">
  <div class="row">
-  <button id="prev">◀️ Forrige</button>
-  <strong id="pageInfo">Side – / –</strong>
-  <button id="next">Næste ▶️</button>
-  <button class="primary" id="analyze">🧠 Find noder på siden</button>
+  <button id="prev">◀️ Forrige</button><strong id="pageInfo">Side – / –</strong><button id="next">Næste ▶️</button>
+  <button class="primary" id="analyze">🧠 Find noder</button>
+  <button id="toggle">👁️ Skjul analyse</button>
   <button id="clear">Ryd analyse</button>
  </div>
  <div class="progress" style="margin-top:10px"><div class="bar" id="bar"></div></div>
@@ -48,30 +42,23 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px;borde
 </div>
 
 <div class="card">
- <div class="stage" id="stage">
-  <canvas id="pdfCanvas"></canvas><canvas id="overlay"></canvas>
- </div>
+ <div class="stage"><div id="canvasWrap"><canvas id="pdfCanvas"></canvas><canvas id="overlay"></canvas></div></div>
 </div>
 
 <div class="card">
  <h3 style="margin-top:0">🔎 Analyse</h3>
  <div id="summary" class="small">Ingen analyse endnu.</div>
+ <div class="notice small">🔵 Blå = fundne staff-linjer · 🟢 Grøn = mulig node · teksten ved grøn prik = foreslået Do-Re-Mi.</div>
 </div>
 
 <div class="card">
- <h3 style="margin-top:0">✏️ Kontrol af fundne noder</h3>
- <div class="small">Ret Do-Re-Mi-forslagene manuelt. Rettelser gemmes i denne session.</div>
+ <h3 style="margin-top:0">✏️ Kontrol af noder</h3>
  <div id="table"></div>
 </div>
 
 <div class="card">
  <h3 style="margin-top:0">📚 Bibliotek / noter / tempo</h3>
- <div class="row">
-  <input id="songName" placeholder="Sangens navn">
-  <button id="saveSong">Gem i bibliotek</button>
-  <button id="addNote">📝 Tilføj note</button>
-  <button id="addTempo">⏱️ Tilføj tempo</button>
- </div>
+ <div class="row"><input id="songName" placeholder="Sangens navn"><button id="saveSong">Gem i bibliotek</button><button id="addNote">📝 Tilføj note</button><button id="addTempo">⏱️ Tilføj tempo</button></div>
  <div id="library" class="small" style="margin-top:8px"></div>
 </div>
 </main>
@@ -80,158 +67,87 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px;borde
 import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
 pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
 
-const $=id=>document.getElementById(id);
-const canvas=$("pdfCanvas"),ctx=canvas.getContext("2d");
-const overlay=$("overlay"),octx=overlay.getContext("2d");
-let pdf=null,page=1,scale=1.5,imageMode=false,nodes=[],systems=[];
-
+const $=id=>document.getElementById(id),canvas=$("pdfCanvas"),ctx=canvas.getContext("2d"),overlay=$("overlay"),octx=overlay.getContext("2d");
+let pdf=null,page=1,scale=1.5,imageMode=false,nodes=[],systems=[],showOverlay=true;
 const notes=["Do","Re","Mi","Fa","Sol","La","Si"];
 
-function status(t){$("status").textContent=t}
-function progress(n){$("bar").style.width=n+"%"}
-function resizeOverlay(){
- overlay.width=canvas.width; overlay.height=canvas.height;
- overlay.style.width=canvas.clientWidth+"px"; overlay.style.height=canvas.clientHeight+"px";
-}
+function status(t){$("status").textContent=t}function progress(n){$("bar").style.width=n+"%"}
+function syncOverlay(){overlay.width=canvas.width;overlay.height=canvas.height;overlay.style.width=canvas.width+"px";overlay.style.height=canvas.height+"px"}
+function updateInfo(){$("pageInfo").textContent=pdf?`Side ${page} / ${pdf.numPages}`:(imageMode?"Foto / scan":"Side – / –")}
 function clearOverlay(){octx.clearRect(0,0,overlay.width,overlay.height)}
-function updatePageInfo(){$("pageInfo").textContent=pdf?`Side ${page} / ${pdf.numPages}`:(imageMode?"Foto / scan":"Side – / –")}
-
-$("pdfInput").onchange=async e=>{
- const f=e.target.files[0];if(!f)return;
- try{
-  status("Indlæser PDF…");progress(15);
-  pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
-  page=1;imageMode=false;await renderPage();
-  status("PDF indlæst. Tryk “Find noder på siden”.");progress(100);
- }catch(err){status("PDF-fejl: "+err.message);progress(0)}
-};
-
-$("imgInput").onchange=e=>{
- const f=e.target.files[0];if(!f)return;
- const im=new Image();
- im.onload=()=>{
-  pdf=null;imageMode=true;canvas.width=im.naturalWidth;canvas.height=im.naturalHeight;
-  ctx.drawImage(im,0,0);resizeOverlay();updatePageInfo();
-  status("Foto/scan indlæst. Tryk “Find noder på siden”.");
- };
- im.src=URL.createObjectURL(f);
-};
-
+function drawOverlay(){
+ clearOverlay(); if(!showOverlay)return;
+ /* Make staff lines deliberately thick and highly visible. */
+ octx.lineWidth=Math.max(4,canvas.width/900);octx.strokeStyle="#1976d2";octx.globalAlpha=.9;
+ systems.forEach((s,si)=>s.forEach(y=>{octx.beginPath();octx.moveTo(0,y);octx.lineTo(canvas.width,y);octx.stroke()}));
+ octx.globalAlpha=1;
+ octx.font=`bold ${Math.max(18,canvas.width/70)}px system-ui`;
+ nodes.forEach((n,i)=>{
+  octx.fillStyle="#16a34a";octx.beginPath();octx.arc(n.x,n.y,Math.max(9,canvas.width/90),0,Math.PI*2);octx.fill();
+  octx.lineWidth=3;octx.strokeStyle="#fff";octx.stroke();
+  octx.fillStyle="#064e3b";octx.fillText(n.note,n.x+14,n.y-12);
+ });
+}
 async function renderPage(){
- const p=await pdf.getPage(page),vp=p.getViewport({scale});
- canvas.width=vp.width;canvas.height=vp.height;
- await p.render({canvasContext:ctx,viewport:vp}).promise;
- resizeOverlay();updatePageInfo();clearOverlay();nodes=[];systems=[];renderTable();
+ const p=await pdf.getPage(page),vp=p.getViewport({scale});canvas.width=vp.width;canvas.height=vp.height;
+ await p.render({canvasContext:ctx,viewport:vp}).promise;syncOverlay();updateInfo();clearOverlay();nodes=[];systems=[];renderTable();
 }
-$("prev").onclick=async()=>{if(pdf&&page>1){page--;await renderPage()}};
-$("next").onclick=async()=>{if(pdf&&page<pdf.numPages){page++;await renderPage()}};
+$("pdfInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{status("Indlæser PDF…");progress(10);pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;page=1;imageMode=false;await renderPage();status("PDF indlæst. Tryk “Find noder”.");progress(100)}catch(err){status("PDF-fejl: "+err.message);progress(0)}};
+$("imgInput").onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{pdf=null;imageMode=true;canvas.width=im.naturalWidth;canvas.height=im.naturalHeight;ctx.drawImage(im,0,0);syncOverlay();updateInfo();status("Foto/scan indlæst. Tryk “Find noder”.")};im.src=URL.createObjectURL(f)};
+$("prev").onclick=async()=>{if(pdf&&page>1){page--;await renderPage()}};$("next").onclick=async()=>{if(pdf&&page<pdf.numPages){page++;await renderPage()}};
 
-function grayPixels(){
- const d=ctx.getImageData(0,0,canvas.width,canvas.height).data,w=canvas.width,h=canvas.height,g=new Uint8Array(w*h);
- for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=.299*d[i]+.587*d[i+1]+.114*d[i+2];
- return {g,w,h};
-}
-
-/* M2: staff lines. This is deliberately conservative: five closely spaced
-   horizontal dark bands are treated as a possible staff system. */
+function grayPixels(){const d=ctx.getImageData(0,0,canvas.width,canvas.height).data,w=canvas.width,h=canvas.height,g=new Uint8Array(w*h);for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=.299*d[i]+.587*d[i+1]+.114*d[i+2];return{g,w,h}}
 function detectStaffLines(g,w,h){
  const candidates=[];
+ /* Local horizontal darkness is more robust than treating any full-width line as staff. */
  for(let y=2;y<h-2;y++){
-  let dark=0;
-  for(let x=0;x<w;x+=2)if(g[y*w+x]<120)dark++;
-  if(dark/(w/2)>.42)candidates.push(y);
+  let dark=0;for(let x=0;x<w;x+=3)if(g[y*w+x]<110)dark++;
+  if(dark/(w/3)>.55)candidates.push(y);
  }
  const groups=[];
- for(const y of candidates){
-  if(!groups.length||y-groups[groups.length-1][groups[groups.length-1].length-1]>4)groups.push([y]);
-  else groups[groups.length-1].push(y);
- }
- const centers=groups.map(a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length));
- const out=[];
- for(let i=0;i<centers.length-4;i++){
-  const five=centers.slice(i,i+5),d=(five[4]-five[0])/4;
-  if(d>=3&&d<=45&&five.every((v,j)=>j===0||Math.abs((v-five[0])-j*d)<d*.5)){out.push(five);i+=4}
+ for(const y of candidates){if(!groups.length||y-groups.at(-1).at(-1)>3)groups.push([y]);else groups.at(-1).push(y)}
+ const c=groups.map(a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length)),out=[];
+ for(let i=0;i<c.length-4;i++){
+  const five=c.slice(i,i+5),d=(five[4]-five[0])/4;
+  if(d>=5&&d<=35&&five.every((v,j)=>j===0||Math.abs((v-five[0])-j*d)<d*.32)){out.push(five);i+=4}
  }
  return out;
 }
-
-/* M3: compact dark connected components around a staff system. */
 function detectNoteheads(g,w,h,sys){
  const spacing=(sys[4]-sys[0])/4,lo=Math.max(1,Math.floor(sys[0]-spacing)),hi=Math.min(h-2,Math.ceil(sys[4]+spacing));
- const seen=new Uint8Array(w*h),found=[];
- const dark=(x,y)=>g[y*w+x]<105;
+ const seen=new Uint8Array(w*h),out=[],dark=(x,y)=>g[y*w+x]<90;
  for(let y=lo;y<=hi;y+=2)for(let x=3;x<w-3;x+=2){
-  const start=y*w+x;if(seen[start]||!dark(x,y))continue;
-  let minx=x,maxx=x,miny=y,maxy=y,count=0,stack=[[x,y]];seen[start]=1;
-  while(stack.length){
-   const [cx,cy]=stack.pop();count++;minx=Math.min(minx,cx);maxx=Math.max(maxx,cx);miny=Math.min(miny,cy);maxy=Math.max(maxy,cy);
-   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
-    const nx=cx+dx,ny=cy+dy;if(nx<1||nx>=w-1||ny<lo||ny>hi)continue;
-    const ni=ny*w+nx;if(!seen[ni]&&dark(nx,ny)){seen[ni]=1;stack.push([nx,ny])}
-   }
+  const st=y*w+x;if(seen[st]||!dark(x,y))continue;let minx=x,maxx=x,miny=y,maxy=y,count=0,stack=[[x,y]];seen[st]=1;
+  while(stack.length){const[cx,cy]=stack.pop();count++;minx=Math.min(minx,cx);maxx=Math.max(maxx,cx);miny=Math.min(miny,cy);maxy=Math.max(maxy,cy);
+   for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<1||nx>=w-1||ny<lo||ny>hi)continue;const ni=ny*w+nx;if(!seen[ni]&&dark(nx,ny)){seen[ni]=1;stack.push([nx,ny])}}
   }
   const ww=maxx-minx+1,hh=maxy-miny+1;
-  if(count>=8&&count<=220&&ww>=3&&ww<=28&&hh>=3&&hh<=20&&ww<spacing*1.35&&hh<spacing*1.2){
-   const cx=(minx+maxx)/2,cy=(miny+maxy)/2;
-   if(!found.some(n=>Math.abs(n.x-cx)<spacing*.7&&Math.abs(n.y-cy)<spacing*.65))found.push({x:cx,y:cy});
-  }
+  if(count>=8&&count<=220&&ww>=3&&ww<=26&&hh>=3&&hh<=18&&ww<spacing*1.4&&hh<spacing*1.25)out.push({x:(minx+maxx)/2,y:(miny+maxy)/2});
  }
- return found;
+ const ded=[];for(const n of out){if(!ded.some(x=>Math.abs(x.x-n.x)<spacing*.65&&Math.abs(x.y-n.y)<spacing*.6))ded.push(n)}
+ return ded;
 }
-
-/* M4/M5: approximate staff position to solfège. Treble-like mapping only;
-   saxophone transposition is intentionally not applied to this prototype. */
-function pitchFor(y,sys){
- const spacing=(sys[4]-sys[0])/4;
- const half=Math.round(((sys[4]-y)/spacing)*2);
- const names=["Mi","Fa","Sol","La","Si","Do","Re","Mi","Fa"];
- return names[Math.max(0,Math.min(names.length-1,half))];
-}
-
-function draw(){
- clearOverlay();octx.lineWidth=2;
- systems.forEach(s=>{octx.strokeStyle="#2563eb";s.forEach(y=>{octx.beginPath();octx.moveTo(0,y);octx.lineTo(overlay.width,y);octx.stroke()})});
- octx.font="bold 16px system-ui";
- nodes.forEach(n=>{octx.fillStyle="#16a34a";octx.beginPath();octx.arc(n.x,n.y,6,0,Math.PI*2);octx.fill();octx.fillStyle="#064e3b";octx.fillText(n.note,n.x+8,n.y-8)});
-}
-
+function pitchFor(y,s){const sp=(s[4]-s[0])/4,half=Math.round(((s[4]-y)/sp)*2),names=["Mi","Fa","Sol","La","Si","Do","Re","Mi","Fa"];return names[Math.max(0,Math.min(8,half))]}
 $("analyze").onclick=()=>{
  if(!canvas.width){status("Indlæs først en PDF eller et foto.");return}
- progress(10);status("Finder fem staff-linjer…");
- const {g,w,h}=grayPixels();systems=detectStaffLines(g,w,h);progress(45);
- nodes=[];
- systems.forEach((s,si)=>detectNoteheads(g,w,h,s).forEach(n=>{n.system=si;n.note=pitchFor(n.y,s);n.corrected=n.note;nodes.push(n)}));
- progress(85);draw();renderTable();
- $("summary").innerHTML=`<span class="${systems.length?"ok":"err"}">Fundet ${systems.length} mulig(e) node-system(er) og ${nodes.length} mulig(e) node(r).</span> <span class="badge">v11.1 prototype</span>`;
- status(systems.length&&nodes.length?"Analyse færdig — kontrollér de grønne markeringer.":"Ingen tilstrækkeligt tydelige systemer/noder fundet på denne side. Prøv en skarpere side.");
- progress(100);
+ progress(10);status("Finder staff-linjer…");const{g,w,h}=grayPixels();systems=detectStaffLines(g,w,h);progress(45);
+ nodes=[];systems.forEach((s,si)=>detectNoteheads(g,w,h,s).forEach(n=>{n.system=si;n.note=pitchFor(n.y,s);n.corrected=n.note;nodes.push(n)}));
+ drawOverlay();renderTable();progress(100);
+ $("summary").innerHTML=`<span class="${systems.length?"ok":"err"}"><b>Fundet ${systems.length} mulig(e) node-system(er) og ${nodes.length} mulig(e) node(r).</b></span><br>Systemerne bruges nu til det synlige overlay. <span class="badge">v11.2 prototype</span>`;
+ status(systems.length?"Analyse færdig. Kig efter de blå linjer og grønne cirkler.":"Ingen staff-systemer fundet.");
 };
+$("toggle").onclick=()=>{showOverlay=!showOverlay;$("toggle").textContent=showOverlay?"👁️ Skjul analyse":"👁️ Vis analyse";drawOverlay()};
+$("clear").onclick=()=>{nodes=[];systems=[];clearOverlay();renderTable();$("summary").textContent="Analyse ryddet."};
 
-$("clear").onclick=()=>{clearOverlay();nodes=[];systems=[];renderTable();$("summary").textContent="Analyse ryddet."};
-
-function renderTable(){
- if(!nodes.length){$("table").innerHTML='<div class="small">Ingen noder at kontrollere.</div>';return}
+function renderTable(){if(!nodes.length){$("table").innerHTML='<div class="small">Ingen noder at kontrollere.</div>';return}
  let h="<table><tr><th>#</th><th>System</th><th>X</th><th>Y</th><th>Forslag</th><th>Ret</th></tr>";
- nodes.slice(0,200).forEach((n,i)=>{
-  h+=`<tr><td>${i+1}</td><td>${n.system+1}</td><td>${Math.round(n.x)}</td><td>${Math.round(n.y)}</td><td>${n.note}</td><td><select data-i="${i}">${notes.map(x=>`<option ${x===n.corrected?"selected":""}>${x}</option>`).join("")}</select></td></tr>`;
- });
- $("table").innerHTML=h+"</table>";
- $("table").querySelectorAll("select").forEach(s=>s.onchange=()=>{nodes[+s.dataset.i].corrected=s.value;nodes[+s.dataset.i].note=s.value;draw()});
+ nodes.slice(0,200).forEach((n,i)=>{h+=`<tr><td>${i+1}</td><td>${n.system+1}</td><td>${Math.round(n.x)}</td><td>${Math.round(n.y)}</td><td>${n.note}</td><td><select data-i="${i}">${notes.map(x=>`<option ${x===n.corrected?"selected":""}>${x}</option>`).join("")}</select></td></tr>`});
+ $("table").innerHTML=h+"</table>";$("table").querySelectorAll("select").forEach(s=>s.onchange=()=>{nodes[+s.dataset.i].corrected=s.value;nodes[+s.dataset.i].note=s.value;drawOverlay()});
 }
-
-$("saveSong").onclick=()=>{
- const name=$("songName").value||"Uden navn";
- const a=JSON.parse(localStorage.getItem("saxcoachSongs")||"[]");
- a.push({name,sax:$("sax").value,page,nodes:nodes.map(n=>({...n})),saved:new Date().toLocaleString("da-DK")});
- localStorage.setItem("saxcoachSongs",JSON.stringify(a));renderLibrary();
-};
+$("saveSong").onclick=()=>{const a=JSON.parse(localStorage.getItem("saxcoachSongs")||"[]");a.push({name:$("songName").value||"Uden navn",sax:$("sax").value,page,nodes:nodes.map(n=>({...n})),saved:new Date().toLocaleString("da-DK")});localStorage.setItem("saxcoachSongs",JSON.stringify(a));renderLibrary()};
 $("addNote").onclick=()=>{const t=prompt("Din note:","Husk at trække vejret");if(t)alert("Note gemt i demoen: "+t)};
 $("addTempo").onclick=()=>{const t=prompt("BPM:","80");if(t)alert("Tempo gemt i demoen: "+t+" BPM")};
-
-function renderLibrary(){
- const a=JSON.parse(localStorage.getItem("saxcoachSongs")||"[]");
- $("library").innerHTML=a.length?a.map(x=>`<span class="badge">🎵 ${x.name} · ${x.sax} · ${x.nodes.length} noder</span>`).join(""):"Biblioteket er tomt.";
-}
+function renderLibrary(){const a=JSON.parse(localStorage.getItem("saxcoachSongs")||"[]");$("library").innerHTML=a.length?a.map(x=>`<span class="badge">🎵 ${x.name} · ${x.sax} · ${x.nodes.length} noder</span>`).join(""):"Biblioteket er tomt."}
 renderLibrary();
 </script>
 </body>
