@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>SaxCoach v14.39</title>
+<title>SaxCoach v14.40</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#eef1f5;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -39,10 +39,10 @@ input,select{padding:9px;border:1px solid #ccd3df;border-radius:9px}
 </style>
 </head>
 <body>
-<header><b>🎷 SaxCoach v14.39</b><span style="margin-left:.5rem;padding:.2rem .5rem;border-radius:999px;background:#111;color:#fff;font-size:.78rem">AKTIV VERSION 14.39</span><div class="nav">
-<button data-tab="library">📚 Bibliotek</button><button data-tab="score">📄 Nodeark</button>
-<button data-tab="tools">📝 Markeringer</button><button data-tab="tempo">⏱️ Tempo</button>
-<button data-tab="sax">🎷 Sax</button><button data-tab="concert">🎭 Koncert</button>
+<header><b>🎷 SaxCoach v14.40</b><span style="margin-left:.5rem;padding:.2rem .5rem;border-radius:999px;background:#111;color:#fff;font-size:.78rem">AKTIV VERSION 14.40</span><div class="nav">
+<button type="button" data-tab="library" onclick="tab('library')">📚 Bibliotek</button><button type="button" data-tab="score" onclick="tab('score')">📄 Nodeark</button>
+<button type="button" data-tab="tools" onclick="tab('tools')">📝 Markeringer</button><button type="button" data-tab="tempo" onclick="tab('tempo')">⏱️ Tempo</button>
+<button type="button" data-tab="sax" onclick="tab('sax')">🎷 Sax</button><button type="button" data-tab="concert" onclick="tab('concert')">🎭 Koncert</button>
 </div></header>
 <main>
 <section id="library" class="panel tab">
@@ -95,10 +95,9 @@ input,select{padding:9px;border:1px solid #ccd3df;border-radius:9px}
 </section>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-let pdfReady=typeof pdfjsLib!=="undefined";
-if(pdfReady){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";}
+let pdfReady=false;
+if(pdfReady){}
 const DB="saxcoach-v12-6",STORE="songs";
 let db,songs=[],current=null,pdfDoc=null,page=1,scale=1.2,tool=null,helpers=false;
 
@@ -129,45 +128,30 @@ document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>tab(b.dataset.
 
 $("importBtn").onclick=async()=>{
   try{
-    let f=$("pdfFile").files[0];
-    if(!f)return alert("Vælg en PDF først.");
-    let buf=await f.arrayBuffer();
-    let s={id:uid(),title:f.name.replace(/\.pdf$/i,""),pdf:new Blob([buf],{type:"application/pdf"}),annotations:{},sax:"Alto (Eb)"};
-    await put(s);songs=await getAll();renderLibrary();await openSong(s.id);
-  }catch(e){console.error(e);alert("PDF kunne ikke importeres: "+e.message)}
+    const f=$("pdfFile").files[0];
+    if(!f){alert("Vælg en PDF først.");return;}
+    $("status").textContent="Importerer PDF…";
+    const data=await f.arrayBuffer();
+    const song={id:uid(),title:f.name.replace(/\.pdf$/i,""),pdfData:data,pdf:new Blob([data],{type:"application/pdf"}),annotations:{},sax:"Alto (Eb)"};
+    const oldDb=db;
+    songs=songs.filter(x=>x.id!==song.id);
+    songs.push(song);
+    if(oldDb){
+      try{await put(song);}catch(e){console.warn("Kunne ikke gemme lokalt:",e)}
+    }
+    try{renderLibrary();}catch(e){}
+    await openSong(song.id);
+  }catch(e){
+    console.error("PDF import error",e);
+    alert("PDF kunne ikke importeres: "+(e.message||e));
+  }
 };
 
 function renderLibrary(){
   $("libraryList").innerHTML=songs.map(s=>`<div class="item"><span><b>${esc(s.title)}</b><br><small>${esc(s.sax||"")}</small></span><button onclick="openSong('${s.id}')">Åbn</button></div>`).join("")||'<p class="muted">Ingen nodeark endnu.</p>'
 }
 
-window.openSong=async id=>{
-  try{
-    current=songs.find(s=>s.id===id);if(!current)return;
-    page=1;scale=1.2;omrByPage=current.omr||{};$("saxSelect").value=current.sax||"Alto (Eb)";tab("score");
-    let url=URL.createObjectURL(current.pdf);
-    if(!pdfReady){
-      const fb=$("pdfFallback");
-      fb.src=url; fb.style.display="block"; fb.style.width="100%"; fb.style.minHeight="70vh";
-      $("pageWrap").style.width="100%"; $("pageWrap").style.height="auto";
-      $("pageCanvas").style.display="none"; $("annLayer").style.display="none";
-      $("pageInfo").textContent="PDF-visning (iPad fallback)";
-      $("status").textContent="PDF åbnet i iPadens PDF-visning. Nodeanalyse kræver PDF.js-forbindelse.";
-      return;
-    }
-    $("pdfFallback").style.display="none"; $("pageCanvas").style.display="block"; $("annLayer").style.display="block";
-    try{
-      pdfDoc=await pdfjsLib.getDocument({url}).promise;
-      render();
-    }catch(pdfErr){
-      console.error(pdfErr);
-      const fb=$("pdfFallback"); fb.src=url; fb.style.display="block"; fb.style.width="100%"; fb.style.minHeight="70vh";
-      $("pageWrap").style.width="100%"; $("pageCanvas").style.display="none"; $("annLayer").style.display="none";
-      $("pageInfo").textContent="PDF-visning (fallback)";
-      $("status").textContent="PDF åbnet i iPadens PDF-visning. PDF.js kunne ikke starte: "+pdfErr.message;
-    }
-  }catch(e){console.error(e);alert("Nodearket kunne ikke åbnes: "+e.message)}
-};
+window.openSong=async id=>{try{current=songs.find(s=>s.id===id);if(!current)return;page=1;scale=1.2;omrByPage=current.omr||{};$("saxSelect").value=current.sax||"Alto (Eb)";tab("score");let data=current.pdfData;if(!data&&current.pdf instanceof Blob)data=await current.pdf.arrayBuffer();if(!data)throw new Error("PDF-data mangler.");if(current._pdfUrl)URL.revokeObjectURL(current._pdfUrl);current._pdfUrl=URL.createObjectURL(new Blob([data],{type:"application/pdf"}));const fb=$("pdfFallback");fb.src=current._pdfUrl;fb.style.display="block";fb.style.width="100%";fb.style.height="78vh";fb.style.minHeight="520px";$("pageCanvas").style.display="none";$("annLayer").style.display="none";$("pageInfo").textContent="PDF-visning";$("status").textContent="Nodearket er åbnet.";pdfDoc=null;}catch(e){console.error(e);alert("Nodearket kunne ikke åbnes: "+(e.message||e));}};
 
 async function render(){
   if(!pdfDoc)return;
@@ -1174,7 +1158,11 @@ $("viewer").addEventListener("click",async ev=>{
 });
 
 $("saveSax").onclick=async()=>{
-  if(!current)return;current.sax=$("saxSelect").value;await put(current);songs=await getAll();renderLibrary();$("saxStatus").textContent="Gemt: "+current.sax
+  if(!current)return;
+  current.sax=$("saxSelect").value;
+  if(db){try{await put(current);}catch(e){console.warn(e)}}
+  renderLibrary();
+  $("saxStatus").textContent="Gemt: "+current.sax;
 };
 
 $("newConcert").onclick=()=>{
@@ -1188,8 +1176,23 @@ function renderConcerts(){
 }
 
 (async()=>{
-  try{await dbOpen();songs=await getAll();renderLibrary();renderConcerts();tab("library");setTimeout(()=>{if(typeof updateLearningInfo==="function")updateLearningInfo()},50)}
-  catch(e){console.error(e);alert("SaxCoach kunne ikke starte: "+e.message)}
+  // iPad/Safari: never let storage initialization prevent the UI from working.
+  try{
+    if(window.indexedDB){
+      await dbOpen();
+      songs=await getAll();
+    }else{
+      songs=[];
+    }
+  }catch(e){
+    console.warn("Lokal lagring ikke tilgængelig på denne iPad:",e);
+    db=null;
+    songs=[];
+  }
+  try{renderLibrary();}catch(e){console.warn(e)}
+  try{renderConcerts();}catch(e){console.warn(e)}
+  try{tab("library");}catch(e){console.warn(e)}
+  try{if(typeof updateLearningInfo==="function")updateLearningInfo();}catch(e){console.warn(e)}
 })();
 </script>
 </body>
