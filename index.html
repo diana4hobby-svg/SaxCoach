@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>SaxCoach v14.44</title>
+<title>SaxCoach v14.45</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#eef1f5;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -65,7 +65,7 @@ button.primary{background:#244f78;color:#fff}
 </style>
 </head>
 <body>
-<header><b>🎷 SaxCoach v14.44</b><span style="margin-left:.5rem;padding:.2rem .5rem;border-radius:999px;background:#111;color:#fff;font-size:.78rem">AKTIV VERSION 14.41</span><div class="nav">
+<header><b>🎷 SaxCoach v14.45</b><span style="margin-left:.5rem;padding:.2rem .5rem;border-radius:999px;background:#111;color:#fff;font-size:.78rem">AKTIV VERSION 14.41</span><div class="nav">
 <button data-tab="library">📚 Bibliotek</button><button data-tab="score">📄 Nodeark</button>
 <button data-tab="tools">📝 Markeringer</button><button data-tab="tempo">⏱️ Tempo</button>
 <button data-tab="sax">🎷 Sax</button><button data-tab="concert">🎭 Koncert</button>
@@ -1007,7 +1007,7 @@ function drawDebugImage(canvas,w,h,groups,diags){
 }
 function showDebugImage(debugCanvas){
   let wrap=$('debugPreview');
-  if(!wrap){wrap=document.createElement('div');wrap.id='debugPreview';wrap.style.cssText='position:fixed;inset:3%;background:white;z-index:9999;padding:10px;border-radius:14px;box-shadow:0 8px 40px #0006;overflow:auto';wrap.innerHTML='<button id="closeDebug" style="float:right">Luk</button><b>🩻 SaxCoach SaxCoach v14.44 — nodehoved-vurdering</b><p class="small">Blå = fundne nodelinjer · lilla = startzone · orange = rå områder · rød = høj score · gul = mulig score · grøn = eksisterende kandidater.</p><canvas id="debugCanvas" style="max-width:100%;margin-top:8px"></canvas>';document.body.appendChild(wrap);wrap.querySelector('#closeDebug').onclick=()=>wrap.remove();}
+  if(!wrap){wrap=document.createElement('div');wrap.id='debugPreview';wrap.style.cssText='position:fixed;inset:3%;background:white;z-index:9999;padding:10px;border-radius:14px;box-shadow:0 8px 40px #0006;overflow:auto';wrap.innerHTML='<button id="closeDebug" style="float:right">Luk</button><b>🩻 SaxCoach v14.46 — nodehoved-vurdering</b><p class="small">Blå = fundne nodelinjer · lilla = startzone · orange = rå områder · rød = høj score · gul = mulig score · grøn = eksisterende kandidater.</p><canvas id="debugCanvas" style="max-width:100%;margin-top:8px"></canvas>';document.body.appendChild(wrap);wrap.querySelector('#closeDebug').onclick=()=>wrap.remove();}
   const c=wrap.querySelector('#debugCanvas');c.width=debugCanvas.width;c.height=debugCanvas.height;c.getContext('2d').drawImage(debugCanvas,0,0);
 }
 function detectNotesOnStaff(ctx,w,h,lines,diagIndex=0,originalCanvas=null){
@@ -1031,7 +1031,7 @@ function reviewCandidatesForPage(){
   const out=[];
   const aw=data.analysisWidth||$('pageCanvas').width||1, ah=data.analysisHeight||$('pageCanvas').height||1;
   for(const d of data.diagnostics){
-    // v14.44: robust fallback chain. Older saved analyses may have the candidates
+    // v14.45: robust fallback chain. Older saved analyses may have the candidates
     // under a different diagnostic field; never show an empty manual-review screen
     // when the analysis actually contains candidate geometry.
     let arr=(d.noteheadCandidates||[]).slice();
@@ -1119,20 +1119,50 @@ function openReviewPicker(candidate,el){
 function renderOmr(){
   clearOmrOverlay(); const data=omrByPage[page]; if(!data) { updateReviewInfo(); return; }
   const layer=$("annLayer"); layer.style.setProperty('--zoom',scale/1.2);
-  for(const ly of data.staffLines||[]){ const e=document.createElement('div');e.className='omrStaff';e.style.top=(ly*100)+'%';layer.appendChild(e); }
+  // v14.45: never rely on percentage positioning for the OMR layer.
+  // PDF.js renders the page in CSS pixels while the analysis may have used
+  // a different internal canvas size. Map every stored source coordinate
+  // directly into the current visible layer dimensions.
+  const layerW=layer.getBoundingClientRect().width || parseFloat(layer.style.width) || 1;
+  const layerH=layer.getBoundingClientRect().height || parseFloat(layer.style.height) || 1;
+  const aw=Number(data.analysisWidth)||$('pageCanvas').width||1;
+  const ah=Number(data.analysisHeight)||$('pageCanvas').height||1;
+  const pxX=x=>Math.max(0,Math.min(layerW,(Number(x)||0)/aw*layerW));
+  const pxY=y=>Math.max(0,Math.min(layerH,(Number(y)||0)/ah*layerH));
+
+  // Draw each detected staff line from its own measured source Y coordinate.
+  // This prevents cumulative vertical drift further down a multi-system page.
+  const lineYs=(data.staffLineCoords||[]).map(Number).filter(Number.isFinite);
+  if(lineYs.length){
+    for(const sy of lineYs){
+      const e=document.createElement('div'); e.className='omrStaff';
+      e.style.top=pxY(sy)+'px'; e.style.width=layerW+'px'; e.style.left='0px';
+      layer.appendChild(e);
+    }
+  }else{
+    for(const ly of data.staffLines||[]){
+      const e=document.createElement('div');e.className='omrStaff';
+      e.style.top=(Number(ly)||0)*layerH+'px'; e.style.width=layerW+'px'; e.style.left='0px';
+      layer.appendChild(e);
+    }
+  }
   const review=reviewCandidatesForPage();
-  // v14.44: the review layer is driven by the same candidate list shown in the
-  // manual-control panel, so saved analyses and freshly generated analyses stay in sync.
   review.forEach(c=>{
     const r=getReview(c.id), state=r?.status||'unknown';
-    const dot=document.createElement('div');dot.className=`reviewNode ${state}`+(state==='unknown'&&c.learned?` learned${c.learned.status==='yes'?' learnedYes':' learnedNo'}`:'');dot.style.left=(c.x*100)+'%';dot.style.top=(c.y*100)+'%';dot.title=`System ${c.system}, kandidat ${c.index} · ${Math.round(c.score*100)}%`;
+    const dot=document.createElement('div');dot.className=`reviewNode ${state}`+(state==='unknown'&&c.learned?` learned${c.learned.status==='yes'?' learnedYes':' learnedNo'}`:'');
+    dot.style.left=pxX(c.x*aw)+'px'; dot.style.top=pxY(c.y*ah)+'px';
+    dot.title=`System ${c.system}, kandidat ${c.index} · ${Math.round(c.score*100)}%`;
     dot.onclick=ev=>{ev.stopPropagation();openReviewPicker(c,dot)}; layer.appendChild(dot);
-    const lab=document.createElement('div');lab.className='reviewNodeLabel';lab.style.left=(c.x*100)+'%';lab.style.top=((c.y*100)-1.2)+'%';lab.textContent=`S${c.system}-${c.index}`;layer.appendChild(lab);
+    const lab=document.createElement('div');lab.className='reviewNodeLabel';
+    lab.style.left=pxX(c.x*aw)+'px'; lab.style.top=Math.max(0,pxY(c.y*ah)-layerH*.012)+'px';
+    lab.textContent=`S${c.system}-${c.index}`;layer.appendChild(lab);
   });
   for(const n of (data.manual||[])){
-    const dot=document.createElement('div');dot.className='manualNode';dot.style.left=(n.x*100)+'%';dot.style.top=(n.y*100)+'%';dot.title='Tryk for at rette denne node';
+    const dot=document.createElement('div');dot.className='manualNode';
+    dot.style.left=pxX(n.x*aw)+'px';dot.style.top=pxY(n.y*ah)+'px';dot.title='Tryk for at rette denne node';
     dot.onclick=ev=>{ev.stopPropagation();showPitchPicker(n,dot)}; layer.appendChild(dot);
-    const lab=document.createElement('div');lab.className='manualNodeLabel';lab.style.left=(n.x*100)+'%';lab.style.top=((n.y*100)+1)+'%';lab.textContent=n.name;layer.appendChild(lab);
+    const lab=document.createElement('div');lab.className='manualNodeLabel';
+    lab.style.left=pxX(n.x*aw)+'px';lab.style.top=pxY(n.y*ah)+layerH*.01+'px';lab.textContent=n.name;layer.appendChild(lab);
   }
   updateReviewInfo();
 }
@@ -1159,11 +1189,11 @@ async function runOMR(){
   const ctx=off.getContext('2d',{willReadFrequently:true}),groups=detectStaffGroups(ctx,w,h),notes=[],diags=[],details=[];
   groups.forEach((rawLines,idx)=>{const lines=normalizedLineYs(rawLines);const r=detectNotesOnStaff(ctx,w,h,lines,idx,$('pageCanvas'));diags.push(r.diag);details.push(r.detail);for(const n of r.notes){const spacing=(lines[4]-lines[0])/4;const step=Math.round((lines[4]-n.y)/spacing*2);if(step<0||step>14)continue;notes.push({x:n.x/w,y:n.y/h,name:pitchFromStep(step),score:n.score,staff:lines.map(v=>v/h),system:idx+1})}});
   notes.sort((a,b)=>a.x-b.x||a.y-b.y);const clean=[];for(const n of notes){if(!clean.some(o=>Math.abs(o.x-n.x)<.006&&Math.abs(o.y-n.y)<.006))clean.push(n)}
-  omrByPage[page]={staffLines:groups.flat().map(v=>lineY(v)/h),notes:clean,manual:[],diagnostics:diags,created:new Date().toISOString(),method:'SaxCoach v14.44 candidate diagnostics'};
+  omrByPage[page]={analysisWidth:w,analysisHeight:h,staffLineCoords:groups.flat().map(v=>lineY(v)),staffLines:groups.flat().map(v=>lineY(v)/h),notes:clean,manual:[],diagnostics:diags,created:new Date().toISOString(),method:'SaxCoach v14.46 zoom-stable coordinates'};
   await saveOmr();
-  $('status').textContent=`Nodegenkendelse v14.44: ${groups.length*5} linjer i ${groups.length} system(er), ${clean.length} mulige noder på side ${page}.`;
+  $('status').textContent=`Nodegenkendelse v14.46: ${groups.length*5} linjer i ${groups.length} system(er), ${clean.length} mulige noder på side ${page}.`;
   $('omrInfo').textContent=`Side ${page}: ${groups.length*5} linjer fundet i ${groups.length} system(er) · ${diags.reduce((a,d)=>a+(d.noteheadCandidates?.length||0),0)} kandidater til manuel kontrol. Lilla = ikke vurderet, grøn = rigtig node, grå = ikke en node.`;
-  $('omrDiag').innerHTML='<b>Systemdiagnostik v14.44</b><br>'+diags.map(d=>{const z=d.startZone||{};return `System ${d.system}: ${d.picked} kandidater <span class="muted">(mørke<235 ${d.rawDarkPixels}, <200 ${d.dark200}, <160 ${d.dark160}, rå ${d.raw}, kompakte ${d.compact}, ovale ${d.oval}, placering ${d.positioned}, sandsynlige nodehoveder ${d.likelyNoteheads?.length||0}, høj ${d.highNoteheads?.length||0}, første-node ${d.firstNoteCandidates?.length||0}, start-recovery ${d.firstNoteRecoveryPicked?.length||0}, recovery ${d.firstRecovery||0} (rå ${d.firstRecoveryRaw||0}), frasorteret ${d.rejected}, original mørke ${d.originalDark})</span><br><span class="muted">↳ Startzone: mørke<235 ${z.dark235||0}, <200 ${z.dark200||0}, <160 ${z.dark160||0}, rå ${z.raw||0}, kompakte ${z.compact||0}, ovale ${z.oval||0}, første-node-forslag ${z.recovery||0}<br>↳ Musikstart: ${Number.isFinite(d.musicStartX)?Math.round(d.musicStartX)+' px':'ikke fundet'} · metode: ${d.musicStartMethod||'—'} · første x: ${(d.musicStartXs||[]).join(', ')}<br>↳ Rå venstre→højre blæk: første X ${Number.isFinite(d.rawFirstX)?Math.round(d.rawFirstX)+' px':'ikke fundet'} · zoner: ${(d.rawFirstXs||[]).join(', ') || 'ingen'}</span>`}).join('<br>')+`<br><b>I alt: ${diags.reduce((a,d)=>a+d.picked,0)} kandidater</b><br><span class="muted">v14.44: Kandidaterne sendes til manuel kontrol. Ingen Do-Re-Mi endnu. Dine vurderinger gemmes separat fra original-PDF'en.</span><br><br>`+details.map(d=>{const arr=(d.candidates||[]).slice().sort((a,b)=>a.cx-b.cx||a.cy-b.cy);return `<b>System ${d.system} — kandidat-inspektion (${arr.length})</b><br><span class="muted">${arr.length?arr.map((a,i)=>`#${i+1}: x=${Math.round(a.cx)}, y=${Math.round(a.cy)}, w=${Math.round(a.maxx-a.minx+1)}, h=${Math.round(a.maxy-a.miny+1)}, score=${Math.round((a.score||0)*100)/100}`).join(' · '):'ingen kandidater'}</span><br><span class="muted">Nodehoved-vurdering: ${((d.noteheadCandidates||[]).slice().sort((a,b)=>b.noteScore-a.noteScore).slice(0,8).map((a)=>`x=${Math.round(a.cx)}, y=${Math.round(a.cy)}, score=${Math.round(a.noteScore*100)/100}, form=${Math.round((a.formScore||0)*100)/100}, plac=${Math.round((a.placementScore||0)*100)/100}, stem=${Math.round((a.stemScore||0)*100)/100}, ${a.confidence}`).join(' · ')||'ingen')}</span><br>`}).join('');
+  $('omrDiag').innerHTML='<b>Systemdiagnostik v14.46</b><br>'+diags.map(d=>{const z=d.startZone||{};return `System ${d.system}: ${d.picked} kandidater <span class="muted">(mørke<235 ${d.rawDarkPixels}, <200 ${d.dark200}, <160 ${d.dark160}, rå ${d.raw}, kompakte ${d.compact}, ovale ${d.oval}, placering ${d.positioned}, sandsynlige nodehoveder ${d.likelyNoteheads?.length||0}, høj ${d.highNoteheads?.length||0}, første-node ${d.firstNoteCandidates?.length||0}, start-recovery ${d.firstNoteRecoveryPicked?.length||0}, recovery ${d.firstRecovery||0} (rå ${d.firstRecoveryRaw||0}), frasorteret ${d.rejected}, original mørke ${d.originalDark})</span><br><span class="muted">↳ Startzone: mørke<235 ${z.dark235||0}, <200 ${z.dark200||0}, <160 ${z.dark160||0}, rå ${z.raw||0}, kompakte ${z.compact||0}, ovale ${z.oval||0}, første-node-forslag ${z.recovery||0}<br>↳ Musikstart: ${Number.isFinite(d.musicStartX)?Math.round(d.musicStartX)+' px':'ikke fundet'} · metode: ${d.musicStartMethod||'—'} · første x: ${(d.musicStartXs||[]).join(', ')}<br>↳ Rå venstre→højre blæk: første X ${Number.isFinite(d.rawFirstX)?Math.round(d.rawFirstX)+' px':'ikke fundet'} · zoner: ${(d.rawFirstXs||[]).join(', ') || 'ingen'}</span>`}).join('<br>')+`<br><b>I alt: ${diags.reduce((a,d)=>a+d.picked,0)} kandidater</b><br><span class="muted">v14.46: Kandidaterne sendes til manuel kontrol. Ingen Do-Re-Mi endnu. Dine vurderinger gemmes separat fra original-PDF'en.</span><br><br>`+details.map(d=>{const arr=(d.candidates||[]).slice().sort((a,b)=>a.cx-b.cx||a.cy-b.cy);return `<b>System ${d.system} — kandidat-inspektion (${arr.length})</b><br><span class="muted">${arr.length?arr.map((a,i)=>`#${i+1}: x=${Math.round(a.cx)}, y=${Math.round(a.cy)}, w=${Math.round(a.maxx-a.minx+1)}, h=${Math.round(a.maxy-a.miny+1)}, score=${Math.round((a.score||0)*100)/100}`).join(' · '):'ingen kandidater'}</span><br><span class="muted">Nodehoved-vurdering: ${((d.noteheadCandidates||[]).slice().sort((a,b)=>b.noteScore-a.noteScore).slice(0,8).map((a)=>`x=${Math.round(a.cx)}, y=${Math.round(a.cy)}, score=${Math.round(a.noteScore*100)/100}, form=${Math.round((a.formScore||0)*100)/100}, plac=${Math.round((a.placementScore||0)*100)/100}, stem=${Math.round((a.stemScore||0)*100)/100}, ${a.confidence}`).join(' · ')||'ingen')}</span><br>`}).join('');
   const dbg=document.createElement('canvas');dbg.width=w;dbg.height=h;drawDebugImage(dbg,w,h,groups,details);window._saxDebugCanvas=dbg;showDebugImage(dbg);
 }
 
