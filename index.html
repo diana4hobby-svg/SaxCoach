@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>SaxCoach v14.41</title>
+<title>SaxCoach v14.43</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#eef1f5;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -37,7 +37,7 @@ input,select{padding:9px;border:1px solid #ccd3df;border-radius:9px}
 .omrStaff{position:absolute;left:0;right:0;height:3px;background:rgba(37,99,235,.65);z-index:3;pointer-events:none}.omrSelected{outline:3px solid #f59e0b!important;outline-offset:2px}.pitchPicker{position:fixed;z-index:2000;background:white;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 8px 30px #0003;padding:10px;display:flex;gap:5px;flex-wrap:wrap;max-width:320px}.pitchPicker button{min-width:42px;font-weight:700}.pitchPicker button.cancel{background:#fee2e2}.manualNode{position:absolute;transform:translate(-50%,-50%);width:18px;height:18px;border:3px solid #2563eb;border-radius:50%;background:#dbeafe;z-index:5;cursor:pointer}.reviewNode{position:absolute;transform:translate(-50%,-50%);width:calc(32px * var(--zoom,1));height:calc(32px * var(--zoom,1));border:2px solid #7c3aed;border-radius:50%;background:rgba(124,58,237,.10);z-index:7;cursor:pointer;pointer-events:auto}.reviewNode.unknown{border-color:#7c3aed;background:rgba(124,58,237,.10)}.reviewNode.yes{border-color:#16a34a;background:rgba(34,197,94,.25)}.reviewNode.no{border-color:#64748b;background:rgba(100,116,139,.18)}.reviewNode.learnedYes{border-style:dashed;box-shadow:0 0 0 2px rgba(22,163,74,.20)}.reviewNode.learnedNo{border-style:dashed;box-shadow:0 0 0 2px rgba(100,116,139,.20)}.reviewNodeLabel{position:absolute;transform:translate(-50%,-100%);z-index:8;font-size:calc(11px * var(--zoom,1));font-weight:800;color:#4c1d95;background:rgba(255,255,255,.92);padding:1px 3px;border-radius:4px;pointer-events:none;white-space:nowrap}.manualNodeLabel{position:absolute;transform:translate(-50%,0);z-index:6;font-weight:800;color:#1d4ed8;text-shadow:0 1px white,0 -1px white,1px 0 white,-1px 0 white;pointer-events:none}
 .omrInfo{margin-top:8px;padding:8px;border-radius:10px;background:#f1f5f9;font-size:13px}
 
-/* v14.41 layout repair */
+/* v14.43 layout repair */
 html,body{width:100%;max-width:100%;overflow-x:hidden;background:#07111f;color:#edf4ff}
 body{min-height:100vh}
 header{background:#081523;border-bottom:1px solid #20334d;padding:12px 12px 10px;width:100%}
@@ -56,9 +56,18 @@ input,select{background:#0d1a2b;color:#edf4ff;border-color:#304866}
 button{background:#13243a;color:#edf4ff;border:1px solid #304866}
 button.primary{background:#244f78;color:#fff}
 </style>
+<style>
+/* v14.43: PDF/score overlay scaling */
+.scoreViewport{position:relative;width:100%;overflow:auto;background:#050b13;border:1px solid #263b55;border-radius:14px;padding:10px}
+.scoreViewport .scoreBase{position:relative;display:inline-block;transform-origin:top left;line-height:0}
+.scoreViewport .scoreBase iframe,.scoreViewport .scoreBase canvas,.scoreViewport .scoreBase img{display:block;max-width:none}
+.scoreViewport .overlayLayer{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+.scoreViewport .overlayLayer>*{position:absolute;transform-origin:center}
+</style>
+
 </head>
 <body>
-<header><b>🎷 SaxCoach v14.41</b><span style="margin-left:.5rem;padding:.2rem .5rem;border-radius:999px;background:#111;color:#fff;font-size:.78rem">AKTIV VERSION 14.41</span><div class="nav">
+<header><b>🎷 SaxCoach v14.43</b><span style="margin-left:.5rem;padding:.2rem .5rem;border-radius:999px;background:#111;color:#fff;font-size:.78rem">AKTIV VERSION 14.43</span><div class="nav">
 <button data-tab="library">📚 Bibliotek</button><button data-tab="score">📄 Nodeark</button>
 <button data-tab="tools">📝 Markeringer</button><button data-tab="tempo">⏱️ Tempo</button>
 <button data-tab="sax">🎷 Sax</button><button data-tab="concert">🎭 Koncert</button>
@@ -77,7 +86,7 @@ button.primary{background:#244f78;color:#fff}
 <button id="zoomOut">−</button><span id="zoomInfo" class="badge">100%</span><button id="zoomIn">+</button><button id="fit">Tilpas</button>
 </div>
 <div id="viewer"><div id="pageWrap"><canvas id="pageCanvas"></canvas><iframe id="pdfFallback" title="PDF-visning" style="display:none;width:100%;min-height:70vh;border:0;background:white"></iframe><div id="annLayer"></div></div></div>
-<p id="status" class="muted"></p><div class="card"><b>🎼 Nodegenkendelse</b><div id="omrInfo" class="omrInfo">Ingen analyse endnu.</div><button id="clearOmr">Ryd nodegenkendelse</button><button id="reviewBtn" class="primary">☑️ Start manuel nodekontrol</button> <button id="approveBtn" class="primary">✅ Godkend noder</button> <button id="reviewExit">Afslut manuel kontrol</button><button id="clearReview">Ryd mine vurderinger</button> <button id="clearLearning">🧠 Ryd læringsprofil</button><button id="prepBtn">🧹 Forbedr analysebillede</button><button id="debugBtn">🩻 Billeddiagnostik</button><label class="muted" style="display:block;margin-top:.6rem">Analyse: <select id="prepMode"><option value="auto">Automatisk</option><option value="clean">Ren PDF</option><option value="scan">Scannet/grå PDF</option><option value="dark">Mørk/støjende PDF</option></select></label><div id="prepInfo" class="muted" style="margin-top:.35rem"></div><div id="omrDiag" class="omrInfo" style="margin-top:.5rem">Systemdiagnostik vises efter analyse.</div><div id="reviewInfo" class="omrInfo" style="margin-top:.5rem">Manuel nodekontrol: tryk først på “Start manuel nodekontrol”.</div><div id="learningInfo" class="omrInfo" style="margin-top:.5rem">🧠 Læringsprofil: ingen gemte eksempler endnu.</div><div id="reviewList" class="omrInfo" style="margin-top:.5rem">Ingen manuel kontrol aktiv.</div><p class="muted" style="margin:.5rem 0 0">v14.41: Manuel nodekontrol. Tryk på en kandidat og vælg Rigtig node eller Ikke en node. Dine vurderinger gemmes separat fra original-PDF'en. Ingen Do-Re-Mi endnu.</p></div>
+<p id="status" class="muted"></p><div class="card"><b>🎼 Nodegenkendelse</b><div id="omrInfo" class="omrInfo">Ingen analyse endnu.</div><button id="clearOmr">Ryd nodegenkendelse</button><button id="reviewBtn" class="primary">☑️ Start manuel nodekontrol</button> <button id="approveBtn" class="primary">✅ Godkend noder</button> <button id="reviewExit">Afslut manuel kontrol</button><button id="clearReview">Ryd mine vurderinger</button> <button id="clearLearning">🧠 Ryd læringsprofil</button><button id="prepBtn">🧹 Forbedr analysebillede</button><button id="debugBtn">🩻 Billeddiagnostik</button><label class="muted" style="display:block;margin-top:.6rem">Analyse: <select id="prepMode"><option value="auto">Automatisk</option><option value="clean">Ren PDF</option><option value="scan">Scannet/grå PDF</option><option value="dark">Mørk/støjende PDF</option></select></label><div id="prepInfo" class="muted" style="margin-top:.35rem"></div><div id="omrDiag" class="omrInfo" style="margin-top:.5rem">Systemdiagnostik vises efter analyse.</div><div id="reviewInfo" class="omrInfo" style="margin-top:.5rem">Manuel nodekontrol: tryk først på “Start manuel nodekontrol”.</div><div id="learningInfo" class="omrInfo" style="margin-top:.5rem">🧠 Læringsprofil: ingen gemte eksempler endnu.</div><div id="reviewList" class="omrInfo" style="margin-top:.5rem">Ingen manuel kontrol aktiv.</div><p class="muted" style="margin:.5rem 0 0">v14.43: Manuel nodekontrol. Tryk på en kandidat og vælg Rigtig node eller Ikke en node. Dine vurderinger gemmes separat fra original-PDF'en. Ingen Do-Re-Mi endnu.</p></div>
 </section>
 
 <section id="tools" class="panel tab hidden">
@@ -1232,6 +1241,30 @@ function renderConcerts(){
 (async()=>{
   try{await dbOpen();songs=await getAll();renderLibrary();renderConcerts();tab("library");setTimeout(()=>{if(typeof updateLearningInfo==="function")updateLearningInfo()},50)}
   catch(e){console.error(e);alert("SaxCoach kunne ikke starte: "+e.message)}
+// v14.43 overlay coordinate helper.
+// All future staff lines/node candidates should use normalized coordinates (0..1)
+// relative to the rendered PDF/image rather than fixed pixel sizes.
+function saxCoachOverlayScale(box, overlay, baseWidth, baseHeight){
+  if(!box || !overlay || !baseWidth || !baseHeight) return;
+  const rect = box.getBoundingClientRect();
+  const sx = rect.width / baseWidth;
+  const sy = rect.height / baseHeight;
+  overlay.style.width = baseWidth + "px";
+  overlay.style.height = baseHeight + "px";
+  overlay.style.transform = "scale("+sx+","+sy+")";
+}
+function saxCoachFitOverlay(viewport){
+  if(!viewport) return;
+  const base = viewport.querySelector(".scoreBase");
+  const overlay = viewport.querySelector(".overlayLayer");
+  if(!base || !overlay) return;
+  const w = base.offsetWidth, h = base.offsetHeight;
+  if(w && h) saxCoachOverlayScale(base, overlay, w, h);
+}
+window.addEventListener("resize", function(){
+  document.querySelectorAll(".scoreViewport").forEach(saxCoachFitOverlay);
+});
+
 })();
 </script>
 </body>
