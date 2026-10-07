@@ -49,8 +49,8 @@ main{width:100%;max-width:none;margin:0 auto;padding:92px 12px 18px}
 .card{background:#102137;color:#edf4ff;border:1px solid #20334d}
 .muted,.small{color:#8ea3bf}
 #viewer{width:100%;max-width:100%;overflow:auto;background:#08111f;border:1px solid #20334d;padding:10px;border-radius:12px}
-#pageWrap{margin:0 auto;max-width:none}
-.item{border-bottom:1px solid #20334d}
+#pageWrap{margin:0 auto;max-width:none;display:block}
+.item{border-bottom:1px solid #20334d;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:.55rem 0}.danger{background:#321722!important;border-color:#6b3342!important}
 .omrInfo{background:#102137;color:#d9e5f3;border:1px solid #20334d}
 input,select{background:#0d1a2b;color:#edf4ff;border-color:#304866}
 button{background:#13243a;color:#edf4ff;border:1px solid #304866}
@@ -74,7 +74,7 @@ button.primary{background:#244f78;color:#fff}
 <h2>📄 Nodeark</h2>
 <div class="row">
 <button id="prev">← Forrige</button><span id="pageInfo">Ingen PDF</span><button id="next">Næste →</button>
-<button id="zoomOut">−</button><button id="zoomIn">+</button><button id="fit">Tilpas</button>
+<button id="zoomOut">−</button><span id="zoomInfo" class="badge">100%</span><button id="zoomIn">+</button><button id="fit">Tilpas</button>
 </div>
 <div id="viewer"><div id="pageWrap"><canvas id="pageCanvas"></canvas><iframe id="pdfFallback" title="PDF-visning" style="display:none;width:100%;min-height:70vh;border:0;background:white"></iframe><div id="annLayer"></div></div></div>
 <p id="status" class="muted"></p><div class="card"><b>🎼 Nodegenkendelse</b><div id="omrInfo" class="omrInfo">Ingen analyse endnu.</div><button id="clearOmr">Ryd nodegenkendelse</button><button id="reviewBtn" class="primary">☑️ Start manuel nodekontrol</button> <button id="approveBtn" class="primary">✅ Godkend noder</button> <button id="reviewExit">Afslut manuel kontrol</button><button id="clearReview">Ryd mine vurderinger</button> <button id="clearLearning">🧠 Ryd læringsprofil</button><button id="prepBtn">🧹 Forbedr analysebillede</button><button id="debugBtn">🩻 Billeddiagnostik</button><label class="muted" style="display:block;margin-top:.6rem">Analyse: <select id="prepMode"><option value="auto">Automatisk</option><option value="clean">Ren PDF</option><option value="scan">Scannet/grå PDF</option><option value="dark">Mørk/støjende PDF</option></select></label><div id="prepInfo" class="muted" style="margin-top:.35rem"></div><div id="omrDiag" class="omrInfo" style="margin-top:.5rem">Systemdiagnostik vises efter analyse.</div><div id="reviewInfo" class="omrInfo" style="margin-top:.5rem">Manuel nodekontrol: tryk først på “Start manuel nodekontrol”.</div><div id="learningInfo" class="omrInfo" style="margin-top:.5rem">🧠 Læringsprofil: ingen gemte eksempler endnu.</div><div id="reviewList" class="omrInfo" style="margin-top:.5rem">Ingen manuel kontrol aktiv.</div><p class="muted" style="margin:.5rem 0 0">v14.41: Manuel nodekontrol. Tryk på en kandidat og vælg Rigtig node eller Ikke en node. Dine vurderinger gemmes separat fra original-PDF'en. Ingen Do-Re-Mi endnu.</p></div>
@@ -157,8 +157,19 @@ $("importBtn").onclick=async()=>{
 };
 
 function renderLibrary(){
-  $("libraryList").innerHTML=songs.map(s=>`<div class="item"><span><b>${esc(s.title)}</b><br><small>${esc(s.sax||"")}</small></span><button onclick="openSong('${s.id}')">Åbn</button></div>`).join("")||'<p class="muted">Ingen nodeark endnu.</p>'
+  $("libraryList").innerHTML=songs.map(s=>`<div class="item"><span><b>${esc(s.title)}</b><br><small>${esc(s.sax||"")}</small></span><span class="row"><button onclick="openSong('${s.id}')">Åbn</button><button class="danger" onclick="deleteSong('${s.id}')">🗑️ Slet</button></span></div>`).join("")||'<p class="muted">Ingen nodeark endnu.</p>'
 }
+
+window.deleteSong=async id=>{
+  const s=songs.find(x=>x.id===id);
+  if(!s)return;
+  if(!confirm(`Slet nodearket “${s.title}”?\n\nNodearket og dets egne markeringer slettes. Originalfilen påvirkes ikke.`))return;
+  await new Promise((ok,no)=>{const r=db.transaction(STORE,"readwrite").objectStore(STORE).delete(id);r.onsuccess=ok;r.onerror=()=>no(r.error)});
+  songs=await getAll();
+  if(current?.id===id){current=null;pdfDoc=null;$('pageInfo').textContent='Ingen PDF';$('pageCanvas').getContext('2d').clearRect(0,0,$('pageCanvas').width,$('pageCanvas').height);$('annLayer').innerHTML='';}
+  renderLibrary();
+  $("status").textContent="Nodearket er slettet.";
+};
 
 window.openSong=async id=>{
   try{
@@ -200,6 +211,7 @@ async function render(){
   const renderViewport=window.devicePixelRatio>1 ? p.getViewport({scale:scale*window.devicePixelRatio}) : v;
   await p.render({canvasContext:ctx,viewport:renderViewport}).promise;
   $("pageInfo").textContent=`Side ${page} / ${pdfDoc.numPages}`;
+  $("zoomInfo").textContent=Math.round(scale/1.2*100)+"%";
   renderAnn();renderHelpers();renderTempoList();renderOmr();$("status").textContent=current.title
 }
 
@@ -242,9 +254,9 @@ function renderTempoList(){
 
 $("prev").onclick=()=>{if(pdfDoc&&page>1){page--;render()}};
 $("next").onclick=()=>{if(pdfDoc&&page<pdfDoc.numPages){page++;render()}};
-$("zoomIn").onclick=()=>{scale=Math.min(3,scale+.2);render()};
-$("zoomOut").onclick=()=>{scale=Math.max(.6,scale-.2);render()};
-$("fit").onclick=()=>{scale=1.2;render()};
+$("zoomIn").onclick=async()=>{scale=Math.min(3.6,Math.round((scale+.2)*10)/10);await render();$("status").textContent=`Zoom ${Math.round(scale/1.2*100)}%`};
+$("zoomOut").onclick=async()=>{scale=Math.max(.6,Math.round((scale-.2)*10)/10);await render();$("status").textContent=`Zoom ${Math.round(scale/1.2*100)}%`};
+$("fit").onclick=async()=>{scale=1.2;await render();$("status").textContent="Tilpasset til skærmen"};
 
 document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{
   tool=b.dataset.tool;tab("score");$("status").textContent="Aktivt værktøj: "+tool+" — tryk på nodearket."
